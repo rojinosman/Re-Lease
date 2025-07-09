@@ -409,7 +409,7 @@ export default function SearchPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="min-h-screen">
             <Navigation />
 
             <div className="container mx-auto px-4 py-8">
@@ -420,7 +420,7 @@ export default function SearchPage() {
                             <div className="flex space-x-1">
                                 <Button
                                     variant={"ghost"}
-                                    onClick={() => router.push("/browse")}
+                                    onClick={() => router.push("/swipe")}
                                     className="flex items-center space-x-2"
                                 >
                                     <Home className="w-4 h-4" />

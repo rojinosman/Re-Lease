@@ -124,13 +124,13 @@ interface Listing {
     const BrowseContent = () => {
         if (!currentListing) {
             return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+            <div className="min-h-screen">
                 <Navigation />
                 <div className="container mx-auto px-4 py-8">
                     <div className="max-w-md mx-auto">
                         <TabBar />
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">No more listings!</h2>
-                        <p className="text-gray-600">Check back later for new sublease opportunities.</p>
+                        <h2 className="text-2xl font-bold text-primary mb-4">No more listings!</h2>
+                        <p className="text-accent">Check back later for new sublease opportunities.</p>
                     </div>
                 </div>
             </div>
@@ -138,12 +138,12 @@ interface Listing {
         }
 
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+            <div className="min-h-screen">
             <Navigation />
             <div className="container mx-auto px-4 py-8">
                 <div className="max-w-md mx-auto">
                     <TabBar />
-                    <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Find Your Perfect Sublease</h1>
+                    <h1 className="text-3xl font-bold text-center mb-8 text-primary">Find Your Perfect Sublease</h1>
 
                 <div className="relative">
                     <Card
