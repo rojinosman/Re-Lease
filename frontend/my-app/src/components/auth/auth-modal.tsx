@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { SignInForm } from "./signin-form"
 import { SignUpForm } from "./signup-form"
@@ -13,9 +14,12 @@ interface AuthModalProps {
 
 export function AuthModal({ isOpen, onClose, defaultMode = "signin" }: AuthModalProps) {
   const [mode, setMode] = useState<"signin" | "signup">(defaultMode)
+  const router = useRouter()
 
   const handleSuccess = () => {
     onClose()
+    // Redirect to search page after successful authentication
+    router.push("/search")
   }
 
   const switchToSignUp = () => setMode("signup")

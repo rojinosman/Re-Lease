@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
-import { Search, MapPin, Bed, Bath, Wifi, Car, Utensils, Heart, Filter } from "lucide-react"
+import { Search, MapPin, Bed, Bath, Wifi, Car, Utensils, Heart, Filter, Home, Star } from "lucide-react"
 import { Navigation } from "@/components/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { AuthModal } from "@/components/auth/auth-modal"
+import { useRouter } from "next/navigation"
 
 interface Listing {
     id: string
@@ -24,9 +25,9 @@ interface Listing {
     description: string
     available: string
     contact: string
-    }
+}
 
-    const mockListings: Listing[] = [
+const mockListings: Listing[] = [
     {
         id: "1",
         title: "Cozy Studio Near Campus",
@@ -105,9 +106,9 @@ interface Listing {
         available: "May 2024",
         contact: "lisa.m@email.com",
     },
-    ]
+]
 
-    const amenityIcons = {
+const amenityIcons = {
     WiFi: Wifi,
     Parking: Car,
     Kitchen: Utensils,
@@ -115,9 +116,13 @@ interface Listing {
     Laundry: Bath,
     Pool: Heart,
     Yard: Heart,
-    }
+}
 
-    export default function SearchPage() {
+type TabType = "browse" | "search" | "liked"
+
+export default function SearchPage() {
+    const [activeTab, setActiveTab] = useState<TabType>("search")
+    const router = useRouter()
     const [searchQuery, setSearchQuery] = useState("")
     const [priceRange, setPriceRange] = useState([0, 2000])
     const [selectedLocation, setSelectedLocation] = useState("Any location")
@@ -125,14 +130,15 @@ interface Listing {
     const [showFilters, setShowFilters] = useState(false)
     const [showAuthModal, setShowAuthModal] = useState(false)
     const [authMode, setAuthMode] = useState<"signin" | "signup">("signin")
+    const [likedListings, setLikedListings] = useState<string[]>([])
     
     const { user } = useAuth()
 
     const filteredListings = mockListings.filter((listing) => {
         const matchesSearch =
-        listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        listing.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        listing.description.toLowerCase().includes(searchQuery.toLowerCase())
+            listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            listing.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            listing.description.toLowerCase().includes(searchQuery.toLowerCase())
 
         const matchesPrice = listing.price >= priceRange[0] && listing.price <= priceRange[1]
 
@@ -143,6 +149,7 @@ interface Listing {
         return matchesSearch && matchesPrice && matchesLocation && matchesBedrooms
     })
 
+    const likedListingsData = mockListings.filter(listing => likedListings.includes(listing.id))
     const locations = [...new Set(mockListings.map((listing) => listing.location))]
 
     const handleContactOwner = () => {
@@ -155,197 +162,300 @@ interface Listing {
         }
     }
 
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <Navigation />
+    const handleLikeListing = (listingId: string) => {
+        if (!user) {
+            setAuthMode("signin")
+            setShowAuthModal(true)
+            return
+        }
+        
+        setLikedListings(prev => 
+            prev.includes(listingId) 
+                ? prev.filter(id => id !== listingId)
+                : [...prev, listingId]
+        )
+    }
 
-        <div className="container mx-auto px-4 py-8">
-            <div className="max-w-6xl mx-auto">
-            <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Search Listings</h1>
-
-            {/* Search Bar */}
-            <Card className="mb-6">
-                <CardContent className="p-6">
-                <div className="flex flex-col lg:flex-row gap-4">
-                    <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <Input
-                        placeholder="Search by title, location, or description..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10 h-12"
-                    />
-                    </div>
-                    <Button
-                    variant="outline"
-                    onClick={() => setShowFilters(!showFilters)}
-                    className="lg:w-auto w-full h-12 bg-white"
-                    >
-                    <Filter className="w-4 h-4 mr-2" />
-                    Filters
-                    </Button>
-                </div>
-
-                {/* Filters */}
-                {showFilters && (
-                    <div className="mt-6 pt-6 border-t grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
-                        <label className="text-sm font-medium mb-2 block">Location</label>
-                        <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Any location" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Any location">Any location</SelectItem>
-                            {locations.map((location) => (
-                            <SelectItem key={location} value={location}>
-                                {location}
-                            </SelectItem>
-                            ))}
-                        </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div>
-                        <label className="text-sm font-medium mb-2 block">Bedrooms</label>
-                        <Select value={selectedBedrooms} onValueChange={setSelectedBedrooms}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Any" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Any">Any</SelectItem>
-                            <SelectItem value="1">1</SelectItem>
-                            <SelectItem value="2">2</SelectItem>
-                            <SelectItem value="3">3</SelectItem>
-                        </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div>
-                        <label className="text-sm font-medium mb-2 block">
-                        Price Range: ${priceRange[0]} - ${priceRange[1]}
-                        </label>
-                        <Slider
-                        value={priceRange}
-                        onValueChange={setPriceRange}
-                        max={2000}
-                        min={0}
-                        step={50}
-                        className="w-full"
-                        />
-                    </div>
-
-                    <div className="flex items-end">
-                        <Button
-                        variant="outline"
-                        onClick={() => {
-                            setSearchQuery("")
-                            setPriceRange([0, 2000])
-                            setSelectedLocation("Any location")
-                            setSelectedBedrooms("Any")
-                        }}
-                        className="w-full h-10 bg-white"
-                        >
-                        Clear Filters
-                        </Button>
-                    </div>
-                    </div>
-                )}
-                </CardContent>
-            </Card>
-
-            {/* Results */}
-            <div className="mb-6">
-                <p className="text-gray-600">
-                {filteredListings.length} listing{filteredListings.length !== 1 ? "s" : ""} found
-                </p>
-            </div>
-
-            {/* Listings Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredListings.map((listing) => (
+    const renderListings = (listings: Listing[]) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {listings.map((listing) => (
                 <Card key={listing.id} className="hover:shadow-lg transition-shadow">
                     <div className="relative">
-                    <img
-                        src={listing.images[0] || "/placeholder.svg"}
-                        alt={listing.title}
-                        className="w-full h-48 object-cover rounded-t-lg"
-                    />
-                    <Badge className="absolute top-4 right-4 bg-green-500">
-                        Available {listing.available}
-                    </Badge>
+                        <img
+                            src={listing.images[0] || "/placeholder.svg"}
+                            alt={listing.title}
+                            className="w-full h-48 object-cover rounded-t-lg"
+                        />
+                        <Badge className="absolute top-4 right-4 bg-green-500">
+                            Available {listing.available}
+                        </Badge>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className={`absolute top-4 left-4 w-8 h-8 p-0 rounded-full ${
+                                likedListings.includes(listing.id) 
+                                    ? "bg-red-500 text-white hover:bg-red-600" 
+                                    : "bg-white/80 hover:bg-white"
+                            }`}
+                            onClick={() => handleLikeListing(listing.id)}
+                        >
+                            <Heart className={`w-4 h-4 ${likedListings.includes(listing.id) ? "fill-current" : ""}`} />
+                        </Button>
                     </div>
 
                     <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-lg font-bold">{listing.title}</h3>
-                        <span className="text-xl font-bold text-green-600">${listing.price}/mo</span>
-                    </div>
-
-                    <div className="flex items-center text-gray-600 mb-4">
-                        <MapPin className="w-4 h-4 mr-1" />
-                        <span className="text-sm">{listing.location}</span>
-                    </div>
-
-                    <div className="flex gap-4 mb-4">
-                        <div className="flex items-center">
-                        <Bed className="w-4 h-4 mr-1" />
-                        <span className="text-sm">{listing.bedrooms} bed</span>
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-lg font-bold">{listing.title}</h3>
+                            <span className="text-xl font-bold text-green-600">${listing.price}/mo</span>
                         </div>
-                        <div className="flex items-center">
-                        <Bath className="w-4 h-4 mr-1" />
-                        <span className="text-sm">{listing.bathrooms} bath</span>
+
+                        <div className="flex items-center text-gray-600 mb-4">
+                            <MapPin className="w-4 h-4 mr-1" />
+                            <span className="text-sm">{listing.location}</span>
                         </div>
-                    </div>
 
-                    <div className="flex flex-wrap gap-2 mb-4">
-                        {listing.amenities.slice(0, 3).map((amenity) => {
-                        const Icon = amenityIcons[amenity as keyof typeof amenityIcons] || Heart
-                        return (
-                            <Badge key={amenity} variant="secondary" className="flex items-center gap-1">
-                            <Icon className="w-3 h-3" />
-                            {amenity}
-                            </Badge>
-                        )
-                        })}
-                        {listing.amenities.length > 3 && (
-                        <Badge variant="secondary">+{listing.amenities.length - 3} more</Badge>
-                        )}
-                    </div>
+                        <div className="flex gap-4 mb-4">
+                            <div className="flex items-center">
+                                <Bed className="w-4 h-4 mr-1" />
+                                <span className="text-sm">{listing.bedrooms} bed</span>
+                            </div>
+                            <div className="flex items-center">
+                                <Bath className="w-4 h-4 mr-1" />
+                                <span className="text-sm">{listing.bathrooms} bath</span>
+                            </div>
+                        </div>
 
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">{listing.description}</p>
+                        <div className="flex flex-wrap gap-2 mb-4">
+                            {listing.amenities.slice(0, 3).map((amenity) => {
+                                const Icon = amenityIcons[amenity as keyof typeof amenityIcons] || Heart
+                                return (
+                                    <Badge key={amenity} variant="secondary" className="flex items-center gap-1">
+                                        <Icon className="w-3 h-3" />
+                                        {amenity}
+                                    </Badge>
+                                )
+                            })}
+                            {listing.amenities.length > 3 && (
+                                <Badge variant="secondary">+{listing.amenities.length - 3} more</Badge>
+                            )}
+                        </div>
 
-                    <Button 
-                        className="w-full bg-blue-600 hover:bg-blue-700"
-                        onClick={handleContactOwner}
-                    >
-                        <Heart className="w-4 h-4 mr-2" />
-                        {user ? "Contact Owner" : "Sign In to Contact"}
-                    </Button>
+                        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{listing.description}</p>
+
+                        <Button 
+                            className="w-full bg-blue-600 hover:bg-blue-700"
+                            onClick={handleContactOwner}
+                        >
+                            {user ? "Contact Owner" : "Sign In to Contact"}
+                        </Button>
                     </CardContent>
                 </Card>
-                ))}
-            </div>
-
-            {filteredListings.length === 0 && (
-                <Card className="text-center py-12">
-                <CardContent>
-                    <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No listings found</h3>
-                    <p className="text-gray-600">
-                    Try adjusting your search criteria or filters to find more listings.
-                    </p>
-                </CardContent>
-                </Card>
-            )}
-            </div>
+            ))}
         </div>
+    )
 
-        <AuthModal 
-            isOpen={showAuthModal}
-            onClose={() => setShowAuthModal(false)}
-            defaultMode={authMode}
-        />
+    const renderTabContent = () => {
+        switch (activeTab) {
+            case "browse":
+                return (
+                    <div>
+                        <div className="mb-6">
+                            <p className="text-gray-600">
+                                {mockListings.length} listing{mockListings.length !== 1 ? "s" : ""} available
+                            </p>
+                        </div>
+                        {renderListings(mockListings)}
+                    </div>
+                )
+            case "search":
+                return (
+                    <div>
+                        {/* Search Bar */}
+                        <Card className="mb-6">
+                            <CardContent className="p-6">
+                                <div className="flex flex-col lg:flex-row gap-4">
+                                    <div className="flex-1 relative">
+                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                        <Input
+                                            placeholder="Search by title, location, or description..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="pl-10 h-12"
+                                        />
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setShowFilters(!showFilters)}
+                                        className="lg:w-auto w-full h-12 bg-white"
+                                    >
+                                        <Filter className="w-4 h-4 mr-2" />
+                                        Filters
+                                    </Button>
+                                </div>
+
+                                {/* Filters */}
+                                {showFilters && (
+                                    <div className="mt-6 pt-6 border-t grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <div>
+                                            <label className="text-sm font-medium mb-2 block">Location</label>
+                                            <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Any location" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Any location">Any location</SelectItem>
+                                                    {locations.map((location) => (
+                                                        <SelectItem key={location} value={location}>
+                                                            {location}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-sm font-medium mb-2 block">Bedrooms</label>
+                                            <Select value={selectedBedrooms} onValueChange={setSelectedBedrooms}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Any" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Any">Any</SelectItem>
+                                                    <SelectItem value="1">1</SelectItem>
+                                                    <SelectItem value="2">2</SelectItem>
+                                                    <SelectItem value="3">3</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-sm font-medium mb-2 block">
+                                                Price Range: ${priceRange[0]} - ${priceRange[1]}
+                                            </label>
+                                            <Slider
+                                                value={priceRange}
+                                                onValueChange={setPriceRange}
+                                                max={2000}
+                                                min={0}
+                                                step={50}
+                                                className="w-full"
+                                            />
+                                        </div>
+
+                                        <div className="flex items-end">
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => {
+                                                    setSearchQuery("")
+                                                    setPriceRange([0, 2000])
+                                                    setSelectedLocation("Any location")
+                                                    setSelectedBedrooms("Any")
+                                                }}
+                                                className="w-full h-10 bg-white"
+                                            >
+                                                Clear Filters
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <div className="mb-6">
+                            <p className="text-gray-600">
+                                {filteredListings.length} listing{filteredListings.length !== 1 ? "s" : ""} found
+                            </p>
+                        </div>
+
+                        {filteredListings.length > 0 ? (
+                            renderListings(filteredListings)
+                        ) : (
+                            <Card className="text-center py-12">
+                                <CardContent>
+                                    <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                                    <h3 className="text-lg font-semibold mb-2">No listings found</h3>
+                                    <p className="text-gray-600">
+                                        Try adjusting your search criteria or filters to find more listings.
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
+                )
+            case "liked":
+                return (
+                    <div>
+                        <div className="mb-6">
+                            <p className="text-gray-600">
+                                {likedListingsData.length} liked listing{likedListingsData.length !== 1 ? "s" : ""}
+                            </p>
+                        </div>
+                        {likedListingsData.length > 0 ? (
+                            renderListings(likedListingsData)
+                        ) : (
+                            <Card className="text-center py-12">
+                                <CardContent>
+                                    <Heart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                                    <h3 className="text-lg font-semibold mb-2">No liked listings yet</h3>
+                                    <p className="text-gray-600">
+                                        Start browsing and like listings to see them here.
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
+                )
+        }
+    }
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+            <Navigation />
+
+            <div className="container mx-auto px-4 py-8">
+                <div className="max-w-6xl mx-auto">
+                    {/* Tabs */}
+                    <div className="flex justify-center mb-8">
+                        <div className="bg-white rounded-lg p-1 shadow-sm">
+                            <div className="flex space-x-1">
+                                <Button
+                                    variant={"ghost"}
+                                    onClick={() => router.push("/browse")}
+                                    className="flex items-center space-x-2"
+                                >
+                                    <Home className="w-4 h-4" />
+                                    <span>Browse</span>
+                                </Button>
+                                <Button
+                                    variant={activeTab === "search" ? "default" : "ghost"}
+                                    onClick={() => setActiveTab("search")}
+                                    className="flex items-center space-x-2"
+                                >
+                                    <Search className="w-4 h-4" />
+                                    <span>Search</span>
+                                </Button>
+                                <Button
+                                    variant={activeTab === "liked" ? "default" : "ghost"}
+                                    onClick={() => setActiveTab("liked")}
+                                    className="flex items-center space-x-2"
+                                >
+                                    <Star className="w-4 h-4" />
+                                    <span>Liked ({likedListings.length})</span>
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Tab Content */}
+                    {renderTabContent()}
+                </div>
+            </div>
+
+            <AuthModal 
+                isOpen={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
+                defaultMode={authMode}
+            />
         </div>
     )
 }
