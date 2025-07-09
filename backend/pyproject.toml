@@ -1,0 +1,87 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "re-lease"
+dynamic = ["version"]
+description = 'sublet website'
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "U.N. Owen", email = "void@some.where" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+
+dependencies = [
+  "fastapi[all]",
+  "passlib[bcrypt]>=1.7.4",
+  "pre-commit>=4.1.0",
+  "pyjwt>=2.10.1",
+  "python-dotenv>=1.0.1",
+  "ruff>=0.9.7",
+  "sqlalchemy>=2.0.38",
+  "python-jose>=3.3.0",
+  "psycopg2-binary",
+  "uvicorn>=0.35.0",
+  "pydantic>=2.11.7",
+]
+
+[project.urls]
+Documentation = "https://github.com/U.N. Owen/re-lease#readme"
+Issues = "https://github.com/U.N. Owen/re-lease/issues"
+Source = "https://github.com/U.N. Owen/re-lease"
+
+[tool.hatch.version]
+path = "src/re_lease/__about__.py"
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+
+[tool.hatch.envs.dev]
+dependencies = [
+  "bandit<1.8.3",
+  "fastapi",
+  "uvicorn",
+  "sqlalchemy",
+  "pydantic"
+]
+
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/re_lease tests}"
+
+[tool.coverage.run]
+source_pkgs = ["re_lease", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/re_lease/__about__.py",
+]
+
+[tool.coverage.paths]
+re_lease = ["src/re_lease", "*/re-lease/src/re_lease"]
+tests = ["tests", "*/re-lease/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+[tool.hatch.envs.default.scripts]
+dev = "fastapi dev {args:src/re_lease/main.py}"
