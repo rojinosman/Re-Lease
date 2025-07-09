@@ -424,7 +424,7 @@ export default function SearchPage() {
                                     className="flex items-center space-x-2"
                                 >
                                     <Home className="w-4 h-4" />
-                                    <span>Browse</span>
+                                    <span>Swipe</span>
                                 </Button>
                                 <Button
                                     variant={activeTab === "search" ? "default" : "ghost"}

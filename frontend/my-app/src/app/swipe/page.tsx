@@ -76,6 +76,7 @@ interface Listing {
     export default function BrowsePage() {
     const [currentIndex, setCurrentIndex] = useState(0)
     const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null)
+    const [likedListings, setLikedListings] = useState<string[]>([])
     const router = useRouter()
 
     const currentListing = mockListings[currentIndex]
@@ -97,7 +98,7 @@ interface Listing {
                         className="flex items-center space-x-2"
                     >
                         <Home className="w-4 h-4" />
-                        <span>Browse</span>
+                        <span>Swipe</span>
                     </Button>
                     <Button
                         variant={"ghost"}
@@ -113,7 +114,7 @@ interface Listing {
                         className="flex items-center space-x-2"
                     >
                         <Star className="w-4 h-4" />
-                        <span>Liked</span>
+                        <span>Liked ({likedListings.length})</span>
                     </Button>
                 </div>
             </div>
