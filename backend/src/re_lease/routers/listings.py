@@ -66,14 +66,14 @@ async def create_new_listing(
 
 @router.get("/", response_model=List[ListingResponse])
 async def get_all_listings(
+    db: db_dependency,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     search: Optional[str] = Query(None),
     min_price: Optional[float] = Query(None, ge=0),
     max_price: Optional[float] = Query(None, ge=0),
     location: Optional[str] = Query(None),
-    bedrooms: Optional[int] = Query(None, ge=1),
-    db: db_dependency = Depends()
+    bedrooms: Optional[int] = Query(None, ge=1)
 ):
     """Get all listings with optional filters"""
     db_listings = get_listings(

@@ -33,7 +33,7 @@ def get_me(db: db_dependency, user: user_dependency):
 
 
 @router.get("/search")
-def search_users(query: str, db: db_dependency = None, user: user_dependency = None):
+def search_users(query: str, db: db_dependency, user: user_dependency):
     if not query or len(query) < 2:
         return []
     users = db.query(User).filter(
