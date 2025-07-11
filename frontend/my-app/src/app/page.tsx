@@ -6,8 +6,15 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Heart, Search, MessageCircle, Shield, Star, ArrowRight } from "lucide-react"
 import { Navigation } from "@/components/navigation"
+import { useAuth } from "@/lib/auth-context"
+import { useState } from "react"
+import { AuthModal } from "@/components/auth/auth-modal"
 
 export default function LandingPage() {
+  const { user } = useAuth()
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin")
+
   const features = [
     {
       icon: Heart,
@@ -60,6 +67,27 @@ export default function LandingPage() {
     },
   ]
 
+  const handleProtectedAction = (action: string) => {
+    if (!user) {
+      setAuthMode("signin")
+      setShowAuthModal(true)
+    }
+  }
+
+  const handleBrowseClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault()
+      handleProtectedAction("browse")
+    }
+  }
+
+  const handleListYourPlaceClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault()
+      handleProtectedAction("list")
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <Navigation />
@@ -77,7 +105,7 @@ export default function LandingPage() {
             secure your next home in minutes.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/browse">
+            <Link href="/browse" onClick={handleBrowseClick}>
               <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-3">
                 <Heart className="w-5 h-5 mr-2" />
                 Start Swiping
@@ -210,13 +238,13 @@ export default function LandingPage() {
               Join thousands of students who have already found their perfect sublease
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/browse">
+              <Link href="/browse" onClick={handleBrowseClick}>
                 <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-3">
                   Start Browsing
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
-              <Link href="/my-listings">
+              <Link href="/my-listings" onClick={handleListYourPlaceClick}>
                 <Button
                   size="lg"
                   variant="outline"
@@ -260,6 +288,12 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        defaultMode={authMode}
+      />
     </div>
   )
 }

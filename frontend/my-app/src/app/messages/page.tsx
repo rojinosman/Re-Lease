@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Send, Search } from "lucide-react"
 import { Navigation } from "@/components/navigation"
+import { ProtectedRoute } from "@/components/auth/protected-route"
 
 interface Message {
     id: string
@@ -97,132 +98,142 @@ interface Message {
 
     const selectedConv = mockConversations.find((c) => c.id === selectedConversation)
 
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <Navigation />
+    const MessagesContent = () => {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+            <Navigation />
 
-        <div className="container mx-auto px-4 py-8">
-            <div className="max-w-6xl mx-auto">
-            <h1 className="text-3xl font-bold text-gray-800 mb-8">Messages</h1>
+            <div className="container mx-auto px-4 py-8">
+                <div className="max-w-6xl mx-auto">
+                <h1 className="text-3xl font-bold text-gray-800 mb-8">Messages</h1>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
-                {/* Conversations List */}
-                <Card className="lg:col-span-1">
-                <CardHeader>
-                    <CardTitle className="text-lg">Conversations</CardTitle>
-                    <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input placeholder="Search messages..." className="pl-10" />
-                    </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                    <div className="space-y-1">
-                    {mockConversations.map((conversation) => (
-                        <div
-                        key={conversation.id}
-                        className={`p-4 cursor-pointer hover:bg-gray-50 border-b ${
-                            selectedConversation === conversation.id ? "bg-blue-50 border-l-4 border-l-blue-500" : ""
-                        }`}
-                        onClick={() => setSelectedConversation(conversation.id)}
-                        >
-                        <div className="flex items-center gap-3">
-                            <Avatar>
-                            <AvatarImage src={conversation.avatar || "/placeholder.svg"} />
-                            <AvatarFallback>
-                                {conversation.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-center">
-                                <h3 className="font-medium truncate">{conversation.name}</h3>
-                                <span className="text-xs text-gray-500">{conversation.timestamp}</span>
-                            </div>
-                            <p className="text-sm text-gray-600 truncate">{conversation.lastMessage}</p>
-                            <p className="text-xs text-blue-600 mt-1">{conversation.listing}</p>
-                            </div>
-                            {conversation.unread > 0 && (
-                            <Badge className="bg-red-500 text-white text-xs">{conversation.unread}</Badge>
-                            )}
-                        </div>
-                        </div>
-                    ))}
-                    </div>
-                </CardContent>
-                </Card>
-
-                {/* Chat Area */}
-                <Card className="lg:col-span-2 flex flex-col">
-                {selectedConv ? (
-                    <>
-                    <CardHeader className="border-b">
-                        <div className="flex items-center gap-3">
-                        <Avatar>
-                            <AvatarImage src={selectedConv.avatar || "/placeholder.svg"} />
-                            <AvatarFallback>
-                            {selectedConv.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <h3 className="font-medium">{selectedConv.name}</h3>
-                            <p className="text-sm text-gray-600">{selectedConv.listing}</p>
-                        </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+                    {/* Conversations List */}
+                    <Card className="lg:col-span-1">
+                    <CardHeader>
+                        <CardTitle className="text-lg">Conversations</CardTitle>
+                        <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Input placeholder="Search messages..." className="pl-10" />
                         </div>
                     </CardHeader>
-
-                    <CardContent className="flex-1 p-4 overflow-y-auto">
-                        <div className="space-y-4">
-                        {messages.map((message) => (
+                    <CardContent className="p-0">
+                        <div className="space-y-1">
+                        {mockConversations.map((conversation) => (
                             <div
-                            key={message.id}
-                            className={`flex ${message.sender === "me" ? "justify-end" : "justify-start"}`}
+                            key={conversation.id}
+                            className={`p-4 cursor-pointer hover:bg-gray-50 border-b ${
+                                selectedConversation === conversation.id ? "bg-blue-50 border-l-4 border-l-blue-500" : ""
+                            }`}
+                            onClick={() => setSelectedConversation(conversation.id)}
                             >
-                            <div
-                                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                                message.sender === "me" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
-                                }`}
-                            >
-                                <p className="text-sm">{message.text}</p>
-                                <p
-                                className={`text-xs mt-1 ${message.sender === "me" ? "text-blue-100" : "text-gray-500"}`}
-                                >
-                                {message.timestamp}
-                                </p>
+                            <div className="flex items-center gap-3">
+                                <Avatar>
+                                <AvatarImage src={conversation.avatar || "/placeholder.svg"} />
+                                <AvatarFallback>
+                                    {conversation.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")}
+                                </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="font-medium truncate">{conversation.name}</h3>
+                                    <span className="text-xs text-gray-500">{conversation.timestamp}</span>
+                                </div>
+                                <p className="text-sm text-gray-600 truncate">{conversation.lastMessage}</p>
+                                <p className="text-xs text-blue-600 mt-1">{conversation.listing}</p>
+                                </div>
+                                {conversation.unread > 0 && (
+                                <Badge className="bg-red-500 text-white text-xs">{conversation.unread}</Badge>
+                                )}
                             </div>
                             </div>
                         ))}
                         </div>
                     </CardContent>
+                    </Card>
 
-                    <div className="p-4 border-t">
-                        <div className="flex gap-2">
-                        <Input
-                            placeholder="Type a message..."
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                            className="flex-1"
-                        />
-                        <Button onClick={handleSendMessage}>
-                            <Send className="w-4 h-4" />
-                        </Button>
+                    {/* Chat Area */}
+                    <Card className="lg:col-span-2 flex flex-col">
+                    {selectedConv ? (
+                        <>
+                        <CardHeader className="border-b">
+                            <div className="flex items-center gap-3">
+                            <Avatar>
+                                <AvatarImage src={selectedConv.avatar || "/placeholder.svg"} />
+                                <AvatarFallback>
+                                {selectedConv.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <h3 className="font-medium">{selectedConv.name}</h3>
+                                <p className="text-sm text-gray-600">{selectedConv.listing}</p>
+                            </div>
+                            </div>
+                        </CardHeader>
+
+                        <CardContent className="flex-1 p-4 overflow-y-auto">
+                            <div className="space-y-4">
+                            {messages.map((message) => (
+                                <div
+                                key={message.id}
+                                className={`flex ${message.sender === "me" ? "justify-end" : "justify-start"}`}
+                                >
+                                <div
+                                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                                    message.sender === "me" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
+                                    }`}
+                                >
+                                    <p className="text-sm">{message.text}</p>
+                                    <p
+                                    className={`text-xs mt-1 ${message.sender === "me" ? "text-blue-100" : "text-gray-500"}`}
+                                    >
+                                    {message.timestamp}
+                                    </p>
+                                </div>
+                                </div>
+                            ))}
+                            </div>
+                        </CardContent>
+
+                        <div className="p-4 border-t">
+                            <div className="flex gap-2">
+                            <Input
+                                value={newMessage}
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                placeholder="Type your message..."
+                                onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                                className="flex-1"
+                            />
+                            <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
+                                <Send className="w-4 h-4" />
+                            </Button>
+                            </div>
                         </div>
-                    </div>
-                    </>
-                ) : (
-                    <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-500">Select a conversation to start messaging</p>
-                    </div>
-                )}
-                </Card>
+                        </>
+                    ) : (
+                        <div className="flex-1 flex items-center justify-center">
+                        <div className="text-center text-gray-500">
+                            <p>Select a conversation to start messaging</p>
+                        </div>
+                        </div>
+                    )}
+                    </Card>
+                </div>
+                </div>
             </div>
             </div>
-        </div>
-        </div>
+        )
+    }
+
+    return (
+        <ProtectedRoute>
+            <MessagesContent />
+        </ProtectedRoute>
     )
 }
