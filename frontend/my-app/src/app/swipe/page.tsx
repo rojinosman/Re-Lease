@@ -4,9 +4,10 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Heart, X, MapPin, Bed, Bath, Wifi, Car, Utensils } from "lucide-react"
+import { Heart, X, MapPin, Bed, Bath, Wifi, Car, Utensils, Search, Home, Star } from "lucide-react"
 import { Navigation } from "@/components/navigation"
 import { ProtectedRoute } from "@/components/auth/protected-route"
+import { useRouter } from "next/navigation"
 
 interface Listing {
     id: string
@@ -75,6 +76,8 @@ interface Listing {
     export default function BrowsePage() {
     const [currentIndex, setCurrentIndex] = useState(0)
     const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null)
+    const [likedListings, setLikedListings] = useState<string[]>([])
+    const router = useRouter()
 
     const currentListing = mockListings[currentIndex]
 
@@ -86,28 +89,61 @@ interface Listing {
         }, 300)
     }
 
+    const TabBar = () => (
+        <div className="flex justify-center mb-8">
+            <div className="bg-white rounded-lg p-1 shadow-sm">
+                <div className="flex space-x-1">
+                    <Button
+                        variant={"default"}
+                        className="flex items-center space-x-2"
+                    >
+                        <Home className="w-4 h-4" />
+                        <span>Swipe</span>
+                    </Button>
+                    <Button
+                        variant={"ghost"}
+                        onClick={() => router.push("/search")}
+                        className="flex items-center space-x-2"
+                    >
+                        <Search className="w-4 h-4" />
+                        <span>Search</span>
+                    </Button>
+                    <Button
+                        variant={"ghost"}
+                        onClick={() => router.push("/search?tab=liked")}
+                        className="flex items-center space-x-2"
+                    >
+                        <Star className="w-4 h-4" />
+                        <span>Liked ({likedListings.length})</span>
+                    </Button>
+                </div>
+            </div>
+        </div>
+    )
+
     const BrowseContent = () => {
         if (!currentListing) {
             return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+            <div className="min-h-screen">
                 <Navigation />
-                <div className="flex items-center justify-center h-[calc(100vh-80px)]">
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-4">No more listings!</h2>
-                    <p className="text-gray-600">Check back later for new sublease opportunities.</p>
-                </div>
+                <div className="container mx-auto px-4 py-8">
+                    <div className="max-w-md mx-auto">
+                        <TabBar />
+                        <h2 className="text-2xl font-bold text-primary mb-4">No more listings!</h2>
+                        <p className="text-accent">Check back later for new sublease opportunities.</p>
+                    </div>
                 </div>
             </div>
             )
         }
 
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+            <div className="min-h-screen">
             <Navigation />
-
             <div className="container mx-auto px-4 py-8">
                 <div className="max-w-md mx-auto">
-                <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Find Your Perfect Sublease</h1>
+                    <TabBar />
+                    <h1 className="text-3xl font-bold text-center mb-8 text-primary">Find Your Perfect Sublease</h1>
 
                 <div className="relative">
                     <Card

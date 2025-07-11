@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Home, List, MessageCircle, Menu, X, User, Search, LogOut } from "lucide-react"
+import { Home, Menu, X, LogOut } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { AuthModal } from "@/components/auth/auth-modal"
 
@@ -14,15 +14,6 @@ export function Navigation() {
     const [authMode, setAuthMode] = useState<"signin" | "signup">("signin")
     const pathname = usePathname()
     const { user, logout } = useAuth()
-
-    // Only show protected nav items when user is authenticated
-    const navItems = user ? [
-        { href: "/browse", label: "Browse", icon: Home },
-        { href: "/my-listings", label: "My Listings", icon: List },
-        { href: "/messages", label: "Messages", icon: MessageCircle },
-    ] : []
-
-    const isActive = (href: string) => pathname === href
 
     const handleSignIn = () => {
         setAuthMode("signin")
@@ -52,26 +43,6 @@ export function Navigation() {
                             <span className="text-xl font-bold text-gray-800">SubLease</span>
                         </Link>
 
-                        {/* Desktop Navigation - Only show when user is authenticated */}
-                        {user && (
-                            <div className="hidden md:flex items-center space-x-1">
-                                {navItems.map((item) => {
-                                    const Icon = item.icon
-                                    return (
-                                        <Link key={item.href} href={item.href}>
-                                            <Button 
-                                                variant={isActive(item.href) ? "default" : "ghost"} 
-                                                className="flex items-center space-x-2"
-                                            >
-                                                <Icon className="w-4 h-4" />
-                                                <span>{item.label}</span>
-                                            </Button>
-                                        </Link>
-                                    )
-                                })}
-                            </div>
-                        )}
-
                         {/* User Menu */}
                         <div className="hidden md:flex items-center space-x-2">
                             {user ? (
@@ -100,35 +71,18 @@ export function Navigation() {
                         </Button>
                     </div>
 
-                    {/* Mobile Navigation - Only show when user is authenticated */}
+                    {/* Mobile Navigation */}
                     {isOpen && (
                         <div className="md:hidden py-4 border-t">
                             {user ? (
                                 <div className="space-y-2">
-                                    {navItems.map((item) => {
-                                        const Icon = item.icon
-                                        return (
-                                            <Link key={item.href} href={item.href} onClick={() => setIsOpen(false)}>
-                                                <Button 
-                                                    variant={isActive(item.href) ? "default" : "ghost"} 
-                                                    className="w-full justify-start"
-                                                >
-                                                    <Icon className="w-4 h-4 mr-2" />
-                                                    {item.label}
-                                                </Button>
-                                            </Link>
-                                        )
-                                    })}
-                                    
-                                    <div className="space-y-2 pt-2 border-t">
-                                        <div className="px-3 py-2 text-sm text-gray-700">
-                                            Welcome, {user.username}!
-                                        </div>
-                                        <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
-                                            <LogOut className="w-4 h-4 mr-2" />
-                                            Sign Out
-                                        </Button>
+                                    <div className="px-3 py-2 text-sm text-gray-700">
+                                        Welcome, {user.username}!
                                     </div>
+                                    <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
+                                        <LogOut className="w-4 h-4 mr-2" />
+                                        Sign Out
+                                    </Button>
                                 </div>
                             ) : (
                                 <div className="space-y-2">
