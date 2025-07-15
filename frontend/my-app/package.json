@@ -2,7 +2,7 @@
   "name": "my-app",
   "version": "0.1.0",
   "private": true,
-  "homepage": "rojinosman.github.io",
+  "homepage": "https://rojinosman.github.io/Re-Lease",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
