@@ -33,14 +33,12 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
     }
 
     try {
-      const success = await login(username.trim(), password)
-      if (success) {
-        onSuccess?.()
-      } else {
-        setError("Invalid username or password")
-      }
-    } catch (err) {
-      setError("An error occurred. Please try again.")
+      setIsLoading(true)
+      setError("")
+      await login(username.trim(), password)
+      onSuccess?.()
+    } catch {
+      setError('Invalid username or password')
     } finally {
       setIsLoading(false)
     }
@@ -107,7 +105,7 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
         
         <div className="mt-4 text-center">
           <p className="text-sm text-gray-600">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <button
               type="button"
               onClick={onSwitchToSignUp}

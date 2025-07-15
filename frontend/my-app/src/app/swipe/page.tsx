@@ -9,6 +9,7 @@ import { Navigation } from "@/components/navigation"
 import { ProtectedRoute } from "@/components/auth/protected-route"
 import { useRouter } from "next/navigation"
 import { listingsApi, type Listing } from "@/lib/api"
+import Image from "next/image"
 
     const amenityIcons = {
     WiFi: Wifi,
@@ -21,7 +22,7 @@ import { listingsApi, type Listing } from "@/lib/api"
     export default function BrowsePage() {
     const [currentIndex, setCurrentIndex] = useState(0)
     const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null)
-    const [likedListings, setLikedListings] = useState<number[]>([])
+    const [likedListings] = useState<number[]>([])
     const [listings, setListings] = useState<Listing[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -161,9 +162,11 @@ import { listingsApi, type Listing } from "@/lib/api"
                     }`}
                     >
                     <div className="relative">
-                        <img
-                        src={currentListing.images[0] || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial, sans-serif' font-size='16' fill='%239ca3af'%3ENo Image Available%3C/text%3E%3C/svg%3E"}
+                        <Image
+                        src={currentListing.images[0] || "/placeholder.svg"}
                         alt={currentListing.title}
+                        width={400}
+                        height={300}
                         className="w-full h-64 object-cover rounded-t-lg"
                         />
                         <Badge className="absolute top-4 right-4 bg-green-500">Available {new Date(currentListing.available_from).toLocaleDateString()}</Badge>

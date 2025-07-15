@@ -70,8 +70,8 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
       } else {
         setError("Username or email already exists")
       }
-    } catch (err) {
-      setError("An error occurred. Please try again.")
+    } catch {
+      setError("Failed to create account. Please try again.")
     } finally {
       setIsLoading(false)
     }

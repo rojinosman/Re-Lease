@@ -82,7 +82,7 @@ export default function MessagesPage() {
         }
 
         fetchConversations()
-    }, [])
+    }, [selectedConversation])
 
     // Fetch messages when conversation is selected
     useEffect(() => {
@@ -103,7 +103,7 @@ export default function MessagesPage() {
         if (selectedConversation && conversations.length > 0) {
             fetchMessages()
         }
-    }, [selectedConversation, conversations.length])
+    }, [selectedConversation, conversations])
 
     const handleSendMessage = useCallback(async (messageText: string) => {
         if (messageText.trim() && selectedConversation) {

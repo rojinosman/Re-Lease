@@ -2,18 +2,16 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Home, Menu, X, LogOut } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { AuthModal } from "@/components/auth/auth-modal"
 
 export function Navigation() {
+    const { user, logout } = useAuth()
     const [isOpen, setIsOpen] = useState(false)
     const [showAuthModal, setShowAuthModal] = useState(false)
     const [authMode, setAuthMode] = useState<"signin" | "signup">("signin")
-    const pathname = usePathname()
-    const { user, logout } = useAuth()
 
     const handleSignIn = () => {
         setAuthMode("signin")

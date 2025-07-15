@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Navigation } from "@/components/navigation"
 import { useRouter } from "next/navigation"
 import { listingsApi } from "@/lib/api"
+import Image from 'next/image'
 
 export default function AddListingPage() {
     const router = useRouter()
@@ -26,8 +27,6 @@ export default function AddListingPage() {
         amenities: [] as string[],
         images: [] as string[],
     })
-    const [imageFiles, setImageFiles] = useState<File[]>([])
-    const [imagePreviews, setImagePreviews] = useState<string[]>([])
 
     const amenityOptions = ["WiFi", "Parking", "Kitchen", "Laundry", "Gym", "Pool", "Air Conditioning", "Heating"]
 
@@ -38,21 +37,22 @@ export default function AddListingPage() {
         }))
     }
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || [])
-        setImageFiles(files)
-        // Preview images
-        Promise.all(files.map(file => {
-            return new Promise<string>((resolve, reject) => {
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files
+        if (files) {
+            const newImages: string[] = []
+            Array.from(files).forEach(file => {
                 const reader = new FileReader()
-                reader.onload = () => resolve(reader.result as string)
-                reader.onerror = reject
+                reader.onload = (event) => {
+                    const target = event.target as FileReader
+                    if (target && target.result) {
+                        newImages.push(target.result as string)
+                        setFormData((prev) => ({ ...prev, images: [...prev.images, target.result as string] }))
+                    }
+                }
                 reader.readAsDataURL(file)
             })
-        })).then((base64s) => {
-            setImagePreviews(base64s)
-            setFormData((prev) => ({ ...prev, images: base64s }))
-        })
+        }
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -165,13 +165,30 @@ export default function AddListingPage() {
                             type="file"
                             accept="image/*"
                             multiple
-                            onChange={handleImageChange}
+                            onChange={handleImageUpload}
                         />
-                        <div className="flex gap-2 mt-2 flex-wrap">
-                            {imagePreviews.map((src, idx) => (
-                                <img key={idx} src={src} alt="preview" className="w-24 h-24 object-cover rounded" />
-                            ))}
-                        </div>
+                        {formData.images.length > 0 && (
+                            <div className="mt-4 grid grid-cols-2 gap-4">
+                                {formData.images.map((image, index) => (
+                                    <div key={index} className="relative">
+                                        <Image
+                                            src={image}
+                                            alt={`Listing image ${index + 1}`}
+                                            width={200}
+                                            height={150}
+                                            className="rounded-lg object-cover"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData((prev) => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }))}
+                                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                     <div>
                         <Label>Amenities</Label>

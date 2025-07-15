@@ -15,20 +15,23 @@ export default function ProfilePage() {
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        const fetchMyListings = async () => {
+        const fetchUserListings = async () => {
             try {
                 setLoading(true)
                 const data = await listingsApi.getMyListings()
                 setListings(data)
                 setError(null)
-            } catch (err) {
+            } catch {
                 setError('Failed to fetch your listings')
             } finally {
                 setLoading(false)
             }
         }
-        fetchMyListings()
-    }, [])
+
+        if (user) {
+            fetchUserListings()
+        }
+    }, [user])
 
     if (!user) {
         return (
