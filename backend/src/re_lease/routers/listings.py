@@ -110,6 +110,38 @@ async def get_all_listings(
     
     return listings_response
 
+@router.get("/liked", response_model=List[ListingResponse])
+async def get_liked_listings(
+    db: db_dependency,
+    current_user: user_dependency
+):
+    user = db.query(User).filter(User.id == current_user.id).first()
+    listings_response = []
+    for listing in user.liked_listings:
+        amenities = json.loads(listing.amenities) if listing.amenities else []
+        images = json.loads(listing.images) if listing.images else []
+        listings_response.append(ListingResponse(
+            id=listing.id,
+            title=listing.title,
+            description=listing.description,
+            price=listing.price,
+            location=listing.location,
+            bedrooms=listing.bedrooms,
+            bathrooms=listing.bathrooms,
+            available_from=listing.available_from,
+            amenities=amenities,
+            images=images,
+            status=listing.status,
+            views=listing.views,
+            interested=listing.interested,
+            created_at=listing.created_at,
+            updated_at=listing.updated_at,
+            user_id=listing.user_id,
+            user_username=listing.user.username
+        ))
+    return listings_response
+
+
 @router.get("/{listing_id}", response_model=ListingResponse)
 async def get_listing(
     listing_id: int,
@@ -274,36 +306,6 @@ async def unlike_listing(
     db.commit()
     return {"message": "Listing unliked"}
 
-@router.get("/liked", response_model=List[ListingResponse])
-async def get_liked_listings(
-    db: db_dependency,
-    current_user: user_dependency
-):
-    user = db.query(User).filter(User.id == current_user.id).first()
-    listings_response = []
-    for listing in user.liked_listings:
-        amenities = json.loads(listing.amenities) if listing.amenities else []
-        images = json.loads(listing.images) if listing.images else []
-        listings_response.append(ListingResponse(
-            id=listing.id,
-            title=listing.title,
-            description=listing.description,
-            price=listing.price,
-            location=listing.location,
-            bedrooms=listing.bedrooms,
-            bathrooms=listing.bathrooms,
-            available_from=listing.available_from,
-            amenities=amenities,
-            images=images,
-            status=listing.status,
-            views=listing.views,
-            interested=listing.interested,
-            created_at=listing.created_at,
-            updated_at=listing.updated_at,
-            user_id=listing.user_id,
-            user_username=listing.user.username
-        ))
-    return listings_response
 
 # Message endpoints
 @router.post("/messages", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)

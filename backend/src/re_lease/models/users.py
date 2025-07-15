@@ -10,6 +10,7 @@ class User(Base):
     email = Column(String(100), unique=True, nullable=False)
     password_hash = Column(String(128), nullable=False)
     bio = Column(String(255), nullable=True)
+    verified = Column(Boolean, default=False)
     
     # Relationships
     listings = relationship("Listing", back_populates="user")
