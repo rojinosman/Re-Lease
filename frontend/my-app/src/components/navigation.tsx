@@ -47,7 +47,17 @@ export function Navigation() {
                         <div className="hidden md:flex items-center space-x-2">
                             {user ? (
                                 <div className="flex items-center space-x-2">
-                                    <span className="text-sm text-gray-700">Welcome, {user.username}!</span>
+                                    <Link href="/profile" className="text-sm text-blue-700 font-semibold hover:underline">
+                                        {user.username}
+                                    </Link>
+                                    <Link href="/messages">
+                                        <Button size="sm" variant="outline">Messages</Button>
+                                    </Link>
+                                    <Link href="/add-listing">
+                                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                                            + Add Listing
+                                        </Button>
+                                    </Link>
                                     <Button variant="ghost" size="sm" onClick={handleLogout}>
                                         <LogOut className="w-4 h-4 mr-2" />
                                         Sign Out

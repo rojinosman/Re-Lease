@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,62 +8,7 @@ import { Heart, X, MapPin, Bed, Bath, Wifi, Car, Utensils, Search, Home, Star } 
 import { Navigation } from "@/components/navigation"
 import { ProtectedRoute } from "@/components/auth/protected-route"
 import { useRouter } from "next/navigation"
-
-interface Listing {
-    id: string
-    title: string
-    price: number
-    location: string
-    bedrooms: number
-    bathrooms: number
-    images: string[]
-    amenities: string[]
-    description: string
-    available: string
-    contact: string
-    }
-
-    const mockListings: Listing[] = [
-    {
-        id: "1",
-        title: "Cozy Studio Near Campus",
-        price: 800,
-        location: "University District",
-        bedrooms: 1,
-        bathrooms: 1,
-        images: ["/placeholder.svg?height=400&width=300"],
-        amenities: ["WiFi", "Parking", "Kitchen"],
-        description: "Perfect for students! Walking distance to campus with all utilities included.",
-        available: "Jan 2024",
-        contact: "sarah.j@email.com",
-    },
-    {
-        id: "2",
-        title: "Shared House Room",
-        price: 600,
-        location: "Downtown",
-        bedrooms: 1,
-        bathrooms: 2,
-        images: ["/placeholder.svg?height=400&width=300"],
-        amenities: ["WiFi", "Kitchen", "Laundry"],
-        description: "Room in a 4-bedroom house with friendly roommates. Great location!",
-        available: "Feb 2024",
-        contact: "mike.r@email.com",
-    },
-    {
-        id: "3",
-        title: "Modern Apartment",
-        price: 1200,
-        location: "Midtown",
-        bedrooms: 2,
-        bathrooms: 1,
-        images: ["/placeholder.svg?height=400&width=300"],
-        amenities: ["WiFi", "Parking", "Kitchen", "Gym"],
-        description: "Newly renovated apartment with modern amenities and great views.",
-        available: "Mar 2024",
-        contact: "alex.k@email.com",
-    },
-    ]
+import { listingsApi, type Listing } from "@/lib/api"
 
     const amenityIcons = {
     WiFi: Wifi,
@@ -76,15 +21,37 @@ interface Listing {
     export default function BrowsePage() {
     const [currentIndex, setCurrentIndex] = useState(0)
     const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null)
-    const [likedListings, setLikedListings] = useState<string[]>([])
+    const [likedListings, setLikedListings] = useState<number[]>([])
+    const [listings, setListings] = useState<Listing[]>([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
     const router = useRouter()
 
-    const currentListing = mockListings[currentIndex]
+    // Fetch listings from API
+    useEffect(() => {
+        const fetchListings = async () => {
+            try {
+                setLoading(true)
+                const data = await listingsApi.getListings()
+                setListings(data)
+                setError(null)
+            } catch (err) {
+                setError('Failed to fetch listings')
+                console.error('Error fetching listings:', err)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchListings()
+    }, [])
+
+    const currentListing = listings[currentIndex]
 
     const handleSwipe = (direction: "left" | "right") => {
         setSwipeDirection(direction)
         setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % mockListings.length)
+        setCurrentIndex((prev) => (prev + 1) % listings.length)
         setSwipeDirection(null)
         }, 300)
     }
@@ -122,6 +89,44 @@ interface Listing {
     )
 
     const BrowseContent = () => {
+        if (loading) {
+            return (
+                <div className="min-h-screen">
+                    <Navigation />
+                    <div className="container mx-auto px-4 py-8">
+                        <div className="max-w-md mx-auto">
+                            <TabBar />
+                            <div className="flex justify-center items-center py-12">
+                                <div className="text-center">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                                    <p className="text-gray-600">Loading listings...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+
+        if (error) {
+            return (
+                <div className="min-h-screen">
+                    <Navigation />
+                    <div className="container mx-auto px-4 py-8">
+                        <div className="max-w-md mx-auto">
+                            <TabBar />
+                            <div className="flex justify-center items-center py-12">
+                                <div className="text-center">
+                                    <p className="text-red-600 mb-4">{error}</p>
+                                    <Button onClick={() => window.location.reload()}>Try Again</Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+
         if (!currentListing) {
             return (
             <div className="min-h-screen">
@@ -157,11 +162,11 @@ interface Listing {
                     >
                     <div className="relative">
                         <img
-                        src={currentListing.images[0] || "/placeholder.svg"}
+                        src={currentListing.images[0] || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial, sans-serif' font-size='16' fill='%239ca3af'%3ENo Image Available%3C/text%3E%3C/svg%3E"}
                         alt={currentListing.title}
                         className="w-full h-64 object-cover rounded-t-lg"
                         />
-                        <Badge className="absolute top-4 right-4 bg-green-500">Available {currentListing.available}</Badge>
+                        <Badge className="absolute top-4 right-4 bg-green-500">Available {new Date(currentListing.available_from).toLocaleDateString()}</Badge>
                     </div>
 
                     <CardContent className="p-6">
@@ -222,7 +227,7 @@ interface Listing {
                 </div>
 
                 <div className="text-center mt-6 text-sm text-gray-600">
-                    {currentIndex + 1} of {mockListings.length} listings
+                    {currentIndex + 1} of {listings.length} listings
                 </div>
                 </div>
             </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,96 +9,162 @@ import { Badge } from "@/components/ui/badge"
 import { Send, Search } from "lucide-react"
 import { Navigation } from "@/components/navigation"
 import { ProtectedRoute } from "@/components/auth/protected-route"
+import { messagesApi, type Conversation, type Message } from "@/lib/api"
+import { Textarea } from "@/components/ui/textarea"
+import { useAuth } from "@/lib/auth-context"
 
-interface Message {
-    id: string
-    text: string
-    sender: "me" | "other"
-    timestamp: string
-    }
+// Separate component for message input to prevent re-renders
+function MessageInput({ 
+    onSendMessage, 
+    disabled 
+}: { 
+    onSendMessage: (message: string) => void
+    disabled: boolean 
+}) {
+    const [inputValue, setInputValue] = useState("")
 
-    interface Conversation {
-    id: string
-    name: string
-    avatar: string
-    lastMessage: string
-    timestamp: string
-    unread: number
-    listing: string
-    }
-
-    const mockConversations: Conversation[] = [
-    {
-        id: "1",
-        name: "Sarah Johnson",
-        avatar: "/placeholder.svg?height=40&width=40",
-        lastMessage: "Is the apartment still available?",
-        timestamp: "2 min ago",
-        unread: 2,
-        listing: "Cozy Studio Near Campus",
-    },
-    {
-        id: "2",
-        name: "Mike Rodriguez",
-        avatar: "/placeholder.svg?height=40&width=40",
-        lastMessage: "Thanks for the info!",
-        timestamp: "1 hour ago",
-        unread: 0,
-        listing: "Shared House Room",
-    },
-    {
-        id: "3",
-        name: "Alex Kim",
-        avatar: "/placeholder.svg?height=40&width=40",
-        lastMessage: "When can I schedule a viewing?",
-        timestamp: "3 hours ago",
-        unread: 1,
-        listing: "Modern Apartment",
-    },
-    ]
-
-    const mockMessages: Message[] = [
-    {
-        id: "1",
-        text: "Hi! I'm interested in your listing for the cozy studio.",
-        sender: "other",
-        timestamp: "10:30 AM",
-    },
-    {
-        id: "2",
-        text: "Great! It's still available. Would you like to know more details?",
-        sender: "me",
-        timestamp: "10:32 AM",
-    },
-    {
-        id: "3",
-        text: "Yes, please! Is the apartment still available?",
-        sender: "other",
-        timestamp: "10:35 AM",
-    },
-    ]
-
-    export default function MessagesPage() {
-    const [selectedConversation, setSelectedConversation] = useState<string | null>("1")
-    const [newMessage, setNewMessage] = useState("")
-    const [messages, setMessages] = useState(mockMessages)
-
-    const handleSendMessage = () => {
-        if (newMessage.trim()) {
-        const message: Message = {
-            id: Date.now().toString(),
-            text: newMessage,
-            sender: "me",
-            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    const handleSend = useCallback(() => {
+        if (inputValue.trim() && !disabled) {
+            onSendMessage(inputValue)
+            setInputValue("")
         }
-        setMessages([...messages, message])
-        setNewMessage("")
-        }
-    }
+    }, [inputValue, onSendMessage, disabled])
 
-    const selectedConv = mockConversations.find((c) => c.id === selectedConversation)
+    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault()
+            handleSend()
+        }
+    }, [handleSend])
+
+    return (
+        <div className="flex gap-2">
+            <Textarea
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="Type your message..."
+                rows={2}
+                className="flex-1 resize-none"
+                onKeyDown={handleKeyDown}
+            />
+            <Button onClick={handleSend} disabled={!inputValue.trim() || disabled}>
+                <Send className="w-4 h-4" />
+            </Button>
+        </div>
+    )
+}
+
+export default function MessagesPage() {
+    const { user } = useAuth()
+    const [selectedConversation, setSelectedConversation] = useState<number | null>(null)
+    const [messages, setMessages] = useState<Message[]>([])
+    const [conversations, setConversations] = useState<Conversation[]>([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+
+    // Fetch conversations from API
+    useEffect(() => {
+        const fetchConversations = async () => {
+            try {
+                setLoading(true)
+                const data = await messagesApi.getConversations()
+                setConversations(data)
+                if (data.length > 0 && !selectedConversation) {
+                    setSelectedConversation(data[0].id)
+                }
+                setError(null)
+            } catch (err) {
+                setError('Failed to fetch conversations')
+                console.error('Error fetching conversations:', err)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchConversations()
+    }, [])
+
+    // Fetch messages when conversation is selected
+    useEffect(() => {
+        const fetchMessages = async () => {
+            if (!selectedConversation) return
+            
+            try {
+                const conversation = conversations.find(c => c.id === selectedConversation)
+                if (conversation) {
+                    const data = await messagesApi.getConversationMessages(conversation.other_user_id, conversation.listing_id)
+                    setMessages(data)
+                }
+            } catch (err) {
+                console.error('Error fetching messages:', err)
+            }
+        }
+
+        if (selectedConversation && conversations.length > 0) {
+            fetchMessages()
+        }
+    }, [selectedConversation, conversations.length])
+
+    const handleSendMessage = useCallback(async (messageText: string) => {
+        if (messageText.trim() && selectedConversation) {
+            try {
+                const conversation = conversations.find(c => c.id === selectedConversation)
+                if (conversation) {
+                    const message = await messagesApi.sendMessage({
+                        text: messageText,
+                        listing_id: conversation.listing_id,
+                        receiver_id: conversation.other_user_id
+                    })
+                    setMessages(prev => [...prev, message])
+                }
+            } catch (err) {
+                console.error('Error sending message:', err)
+            }
+        }
+    }, [selectedConversation, conversations])
+
+    const selectedConv = useMemo(() => 
+        conversations.find((c) => c.id === selectedConversation), 
+        [conversations, selectedConversation]
+    )
 
     const MessagesContent = () => {
+        if (loading) {
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+                    <Navigation />
+                    <div className="container mx-auto px-4 py-8">
+                        <div className="max-w-6xl mx-auto">
+                            <div className="flex justify-center items-center py-12">
+                                <div className="text-center">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                                    <p className="text-gray-600">Loading messages...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+
+        if (error) {
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+                    <Navigation />
+                    <div className="container mx-auto px-4 py-8">
+                        <div className="max-w-6xl mx-auto">
+                            <div className="flex justify-center items-center py-12">
+                                <div className="text-center">
+                                    <p className="text-red-600 mb-4">{error}</p>
+                                    <Button onClick={() => window.location.reload()}>Try Again</Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
             <Navigation />
@@ -119,7 +185,7 @@ interface Message {
                     </CardHeader>
                     <CardContent className="p-0">
                         <div className="space-y-1">
-                        {mockConversations.map((conversation) => (
+                        {conversations.map((conversation) => (
                             <div
                             key={conversation.id}
                             className={`p-4 cursor-pointer hover:bg-gray-50 border-b ${
@@ -129,9 +195,9 @@ interface Message {
                             >
                             <div className="flex items-center gap-3">
                                 <Avatar>
-                                <AvatarImage src={conversation.avatar || "/placeholder.svg"} />
+                                <AvatarImage src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial, sans-serif' font-size='12' fill='%239ca3af'%3EUser%3C/text%3E%3C/svg%3E" />
                                 <AvatarFallback>
-                                    {conversation.name
+                                    {conversation.other_user_name
                                     .split(" ")
                                     .map((n) => n[0])
                                     .join("")}
@@ -139,14 +205,14 @@ interface Message {
                                 </Avatar>
                                 <div className="flex-1 min-w-0">
                                 <div className="flex justify-between items-center">
-                                    <h3 className="font-medium truncate">{conversation.name}</h3>
-                                    <span className="text-xs text-gray-500">{conversation.timestamp}</span>
+                                    <h3 className="font-medium truncate">{conversation.other_user_name}</h3>
+                                    <span className="text-xs text-gray-500">{new Date(conversation.last_message_time).toLocaleString()}</span>
                                 </div>
-                                <p className="text-sm text-gray-600 truncate">{conversation.lastMessage}</p>
-                                <p className="text-xs text-blue-600 mt-1">{conversation.listing}</p>
+                                <p className="text-sm text-gray-600 truncate">{conversation.last_message}</p>
+                                <p className="text-xs text-blue-600 mt-1">{conversation.listing_title}</p>
                                 </div>
-                                {conversation.unread > 0 && (
-                                <Badge className="bg-red-500 text-white text-xs">{conversation.unread}</Badge>
+                                {conversation.unread_count > 0 && (
+                                <Badge className="bg-red-500 text-white text-xs">{conversation.unread_count}</Badge>
                                 )}
                             </div>
                             </div>
@@ -162,17 +228,17 @@ interface Message {
                         <CardHeader className="border-b">
                             <div className="flex items-center gap-3">
                             <Avatar>
-                                <AvatarImage src={selectedConv.avatar || "/placeholder.svg"} />
+                                <AvatarImage src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial, sans-serif' font-size='12' fill='%239ca3af'%3EUser%3C/text%3E%3C/svg%3E" />
                                 <AvatarFallback>
-                                {selectedConv.name
+                                {selectedConv.other_user_name
                                     .split(" ")
                                     .map((n) => n[0])
                                     .join("")}
                                 </AvatarFallback>
                             </Avatar>
                             <div>
-                                <h3 className="font-medium">{selectedConv.name}</h3>
-                                <p className="text-sm text-gray-600">{selectedConv.listing}</p>
+                                <h3 className="font-medium">{selectedConv.other_user_name}</h3>
+                                <p className="text-sm text-gray-600">{selectedConv.listing_title}</p>
                             </div>
                             </div>
                         </CardHeader>
@@ -182,18 +248,18 @@ interface Message {
                             {messages.map((message) => (
                                 <div
                                 key={message.id}
-                                className={`flex ${message.sender === "me" ? "justify-end" : "justify-start"}`}
+                                className={`flex ${user && message.sender_username === user.username ? "justify-end" : "justify-start"}`}
                                 >
                                 <div
                                     className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                                    message.sender === "me" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
+                                    user && message.sender_username === user.username ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
                                     }`}
                                 >
                                     <p className="text-sm">{message.text}</p>
                                     <p
-                                    className={`text-xs mt-1 ${message.sender === "me" ? "text-blue-100" : "text-gray-500"}`}
+                                    className={`text-xs mt-1 ${user && message.sender_username === user.username ? "text-blue-100" : "text-gray-500"}`}
                                     >
-                                    {message.timestamp}
+                                    {new Date(message.created_at).toLocaleString()}
                                     </p>
                                 </div>
                                 </div>
@@ -202,18 +268,10 @@ interface Message {
                         </CardContent>
 
                         <div className="p-4 border-t">
-                            <div className="flex gap-2">
-                            <Input
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                placeholder="Type your message..."
-                                onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                                className="flex-1"
+                            <MessageInput 
+                                onSendMessage={handleSendMessage}
+                                disabled={!selectedConversation}
                             />
-                            <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
-                                <Send className="w-4 h-4" />
-                            </Button>
-                            </div>
                         </div>
                         </>
                     ) : (

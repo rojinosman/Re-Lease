@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,49 +8,39 @@ import { Plus, Edit, Trash2, MapPin, Bed, Bath } from "lucide-react"
 import { Navigation } from "@/components/navigation"
 import { ProtectedRoute } from "@/components/auth/protected-route"
 import Link from "next/link"
-
-interface MyListing {
-    id: string
-    title: string
-    price: number
-    location: string
-    bedrooms: number
-    bathrooms: number
-    status: "active" | "pending" | "rented"
-    views: number
-    interested: number
-    }
-
-    const mockMyListings: MyListing[] = [
-    {
-        id: "1",
-        title: "Spacious 2BR Apartment",
-        price: 1000,
-        location: "Campus Area",
-        bedrooms: 2,
-        bathrooms: 1,
-        status: "active",
-        views: 45,
-        interested: 8,
-    },
-    {
-        id: "2",
-        title: "Studio with Balcony",
-        price: 750,
-        location: "Downtown",
-        bedrooms: 1,
-        bathrooms: 1,
-        status: "pending",
-        views: 23,
-        interested: 3,
-    },
-    ]
+import { listingsApi, type Listing } from "@/lib/api"
 
     export default function MyListingsPage() {
-    const [listings, setListings] = useState(mockMyListings)
+    const [listings, setListings] = useState<Listing[]>([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
-    const handleDelete = (id: string) => {
-        setListings(listings.filter((listing) => listing.id !== id))
+    // Fetch user's listings from API
+    useEffect(() => {
+        const fetchMyListings = async () => {
+            try {
+                setLoading(true)
+                const data = await listingsApi.getMyListings()
+                setListings(data)
+                setError(null)
+            } catch (err) {
+                setError('Failed to fetch your listings')
+                console.error('Error fetching my listings:', err)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchMyListings()
+    }, [])
+
+    const handleDelete = async (id: number) => {
+        try {
+            await listingsApi.deleteListing(id)
+            setListings(listings.filter((listing) => listing.id !== id))
+        } catch (err) {
+            console.error('Error deleting listing:', err)
+        }
     }
 
     const getStatusColor = (status: string) => {
@@ -67,6 +57,42 @@ interface MyListing {
     }
 
     const MyListingsContent = () => {
+        if (loading) {
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+                    <Navigation />
+                    <div className="container mx-auto px-4 py-8">
+                        <div className="max-w-4xl mx-auto">
+                            <div className="flex justify-center items-center py-12">
+                                <div className="text-center">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                                    <p className="text-gray-600">Loading your listings...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+
+        if (error) {
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+                    <Navigation />
+                    <div className="container mx-auto px-4 py-8">
+                        <div className="max-w-4xl mx-auto">
+                            <div className="flex justify-center items-center py-12">
+                                <div className="text-center">
+                                    <p className="text-red-600 mb-4">{error}</p>
+                                    <Button onClick={() => window.location.reload()}>Try Again</Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
             <Navigation />

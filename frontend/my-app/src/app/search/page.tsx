@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,101 +12,10 @@ import { Navigation } from "@/components/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { AuthModal } from "@/components/auth/auth-modal"
 import { useRouter } from "next/navigation"
-
-interface Listing {
-    id: string
-    title: string
-    price: number
-    location: string
-    bedrooms: number
-    bathrooms: number
-    images: string[]
-    amenities: string[]
-    description: string
-    available: string
-    contact: string
-}
-
-const mockListings: Listing[] = [
-    {
-        id: "1",
-        title: "Cozy Studio Near Campus",
-        price: 800,
-        location: "University District",
-        bedrooms: 1,
-        bathrooms: 1,
-        images: ["/placeholder.svg?height=300&width=400"],
-        amenities: ["WiFi", "Parking", "Kitchen"],
-        description: "Perfect for students! Walking distance to campus with all utilities included.",
-        available: "Jan 2024",
-        contact: "sarah.j@email.com",
-    },
-    {
-        id: "2",
-        title: "Shared House Room",
-        price: 600,
-        location: "Downtown",
-        bedrooms: 1,
-        bathrooms: 2,
-        images: ["/placeholder.svg?height=300&width=400"],
-        amenities: ["WiFi", "Kitchen", "Laundry"],
-        description: "Room in a 4-bedroom house with friendly roommates. Great location!",
-        available: "Feb 2024",
-        contact: "mike.r@email.com",
-    },
-    {
-        id: "3",
-        title: "Modern Apartment",
-        price: 1200,
-        location: "Midtown",
-        bedrooms: 2,
-        bathrooms: 1,
-        images: ["/placeholder.svg?height=300&width=400"],
-        amenities: ["WiFi", "Parking", "Kitchen", "Gym"],
-        description: "Newly renovated apartment with modern amenities and great views.",
-        available: "Mar 2024",
-        contact: "alex.k@email.com",
-    },
-    {
-        id: "4",
-        title: "Luxury Studio Downtown",
-        price: 1500,
-        location: "Downtown",
-        bedrooms: 1,
-        bathrooms: 1,
-        images: ["/placeholder.svg?height=300&width=400"],
-        amenities: ["WiFi", "Parking", "Kitchen", "Gym", "Pool"],
-        description: "High-end studio with premium amenities and city views.",
-        available: "Apr 2024",
-        contact: "emma.w@email.com",
-    },
-    {
-        id: "5",
-        title: "Budget-Friendly Room",
-        price: 450,
-        location: "University District",
-        bedrooms: 1,
-        bathrooms: 1,
-        images: ["/placeholder.svg?height=300&width=400"],
-        amenities: ["WiFi", "Kitchen"],
-        description: "Affordable option for students on a budget. Clean and safe.",
-        available: "Jan 2024",
-        contact: "john.d@email.com",
-    },
-    {
-        id: "6",
-        title: "Spacious 3BR House",
-        price: 2000,
-        location: "Suburbs",
-        bedrooms: 3,
-        bathrooms: 2,
-        images: ["/placeholder.svg?height=300&width=400"],
-        amenities: ["WiFi", "Parking", "Kitchen", "Laundry", "Yard"],
-        description: "Perfect for group of friends. Large house with backyard.",
-        available: "May 2024",
-        contact: "lisa.m@email.com",
-    },
-]
+import { listingsApi, type Listing, messagesApi } from "@/lib/api"
+import Link from "next/link"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 
 const amenityIcons = {
     WiFi: Wifi,
@@ -130,39 +39,64 @@ export default function SearchPage() {
     const [showFilters, setShowFilters] = useState(false)
     const [showAuthModal, setShowAuthModal] = useState(false)
     const [authMode, setAuthMode] = useState<"signin" | "signup">("signin")
-    const [likedListings, setLikedListings] = useState<string[]>([])
+    const [likedListings, setLikedListings] = useState<number[]>([])
+    const [listings, setListings] = useState<Listing[]>([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
     
     const { user } = useAuth()
+    const [messageModalOpen, setMessageModalOpen] = useState(false)
+    const [messageTarget, setMessageTarget] = useState<{ownerId: number, ownerUsername: string, listingId: number} | null>(null)
+    const [messageText, setMessageText] = useState("")
+    const [messageSending, setMessageSending] = useState(false)
+    const [messageSent, setMessageSent] = useState(false)
+    const [messageError, setMessageError] = useState<string | null>(null)
 
-    const filteredListings = mockListings.filter((listing) => {
-        const matchesSearch =
-            listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            listing.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            listing.description.toLowerCase().includes(searchQuery.toLowerCase())
+    // Fetch listings from API
+    useEffect(() => {
+        const fetchListings = async () => {
+            try {
+                setLoading(true)
+                const params: any = {}
+                
+                if (searchQuery) params.search = searchQuery
+                if (priceRange[0] > 0) params.min_price = priceRange[0]
+                if (priceRange[1] < 2000) params.max_price = priceRange[1]
+                if (selectedLocation !== "Any location") params.location = selectedLocation
+                if (selectedBedrooms !== "Any") params.bedrooms = parseInt(selectedBedrooms)
+                
+                const data = await listingsApi.getListings(params)
+                setListings(data)
+                setError(null)
+            } catch (err) {
+                setError('Failed to fetch listings')
+                console.error('Error fetching listings:', err)
+            } finally {
+                setLoading(false)
+            }
+        }
 
-        const matchesPrice = listing.price >= priceRange[0] && listing.price <= priceRange[1]
+        fetchListings()
+    }, [searchQuery, priceRange, selectedLocation, selectedBedrooms])
 
-        const matchesLocation = selectedLocation === "Any location" || listing.location === selectedLocation
+    const likedListingsData = listings.filter(listing => likedListings.includes(listing.id))
+    const locations = [...new Set(listings.map((listing) => listing.location))]
 
-        const matchesBedrooms = selectedBedrooms === "Any" || listing.bedrooms.toString() === selectedBedrooms
-
-        return matchesSearch && matchesPrice && matchesLocation && matchesBedrooms
-    })
-
-    const likedListingsData = mockListings.filter(listing => likedListings.includes(listing.id))
-    const locations = [...new Set(mockListings.map((listing) => listing.location))]
-
-    const handleContactOwner = () => {
+    const handleContactOwner = (listing: Listing) => {
         if (!user) {
             setAuthMode("signin")
             setShowAuthModal(true)
         } else {
-            // Handle contact owner logic for authenticated users
-            console.log("Contacting owner...")
+            setMessageTarget({
+                ownerId: listing.user_id,
+                ownerUsername: listing.user_username,
+                listingId: listing.id
+            })
+            setMessageModalOpen(true)
         }
     }
 
-    const handleLikeListing = (listingId: string) => {
+    const handleLikeListing = (listingId: number) => {
         if (!user) {
             setAuthMode("signin")
             setShowAuthModal(true)
@@ -176,18 +110,41 @@ export default function SearchPage() {
         )
     }
 
+    const sendMessageToOwner = async () => {
+        if (!messageTarget || !messageText.trim()) return
+        setMessageSending(true)
+        setMessageError(null)
+        try {
+            await messagesApi.sendMessage({
+                text: messageText,
+                listing_id: messageTarget.listingId,
+                receiver_id: messageTarget.ownerId
+            })
+            setMessageSent(true)
+            setMessageText("")
+            setTimeout(() => {
+                setMessageModalOpen(false)
+                setMessageSent(false)
+            }, 1200)
+        } catch (err) {
+            setMessageError("Failed to send message")
+        } finally {
+            setMessageSending(false)
+        }
+    }
+
     const renderListings = (listings: Listing[]) => (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {listings.map((listing) => (
                 <Card key={listing.id} className="hover:shadow-lg transition-shadow">
                     <div className="relative">
                         <img
-                            src={listing.images[0] || "/placeholder.svg"}
+                            src={listing.images[0] || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial, sans-serif' font-size='16' fill='%239ca3af'%3ENo Image Available%3C/text%3E%3C/svg%3E"}
                             alt={listing.title}
                             className="w-full h-48 object-cover rounded-t-lg"
                         />
                         <Badge className="absolute top-4 right-4 bg-green-500">
-                            Available {listing.available}
+                            Available {new Date(listing.available_from).toLocaleDateString()}
                         </Badge>
                         <Button
                             variant="ghost"
@@ -244,7 +201,7 @@ export default function SearchPage() {
 
                         <Button 
                             className="w-full bg-blue-600 hover:bg-blue-700"
-                            onClick={handleContactOwner}
+                            onClick={() => handleContactOwner(listing)}
                         >
                             {user ? "Contact Owner" : "Sign In to Contact"}
                         </Button>
@@ -259,17 +216,31 @@ export default function SearchPage() {
             case "browse":
                 return (
                     <div>
+                        {user && (
+                            <div className="mb-4 flex justify-end">
+                                <Link href="/add-listing">
+                                    <Button className="bg-blue-600 hover:bg-blue-700">+ Add Listing</Button>
+                                </Link>
+                            </div>
+                        )}
                         <div className="mb-6">
                             <p className="text-gray-600">
-                                {mockListings.length} listing{mockListings.length !== 1 ? "s" : ""} available
+                                {listings.length} listing{listings.length !== 1 ? "s" : ""} available
                             </p>
                         </div>
-                        {renderListings(mockListings)}
+                        {renderListings(listings)}
                     </div>
                 )
             case "search":
                 return (
                     <div>
+                        {user && (
+                            <div className="mb-4 flex justify-end">
+                                <Link href="/add-listing">
+                                    <Button className="bg-blue-600 hover:bg-blue-700">+ Add Listing</Button>
+                                </Link>
+                            </div>
+                        )}
                         {/* Search Bar */}
                         <Card className="mb-6">
                             <CardContent className="p-6">
@@ -363,12 +334,12 @@ export default function SearchPage() {
 
                         <div className="mb-6">
                             <p className="text-gray-600">
-                                {filteredListings.length} listing{filteredListings.length !== 1 ? "s" : ""} found
+                                {listings.length} listing{listings.length !== 1 ? "s" : ""} found
                             </p>
                         </div>
 
-                        {filteredListings.length > 0 ? (
-                            renderListings(filteredListings)
+                        {listings.length > 0 ? (
+                            renderListings(listings)
                         ) : (
                             <Card className="text-center py-12">
                                 <CardContent>
@@ -456,6 +427,34 @@ export default function SearchPage() {
                 onClose={() => setShowAuthModal(false)}
                 defaultMode={authMode}
             />
+
+            <Dialog open={messageModalOpen} onOpenChange={setMessageModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Message Owner</DialogTitle>
+                    </DialogHeader>
+                    {messageTarget && (
+                        <div>
+                            <div className="mb-2 text-sm text-gray-700">To: <span className="font-semibold">{messageTarget.ownerUsername}</span></div>
+                            <Textarea
+                                value={messageText}
+                                onChange={e => setMessageText(e.target.value)}
+                                placeholder="Type your message..."
+                                rows={4}
+                                className="mb-2"
+                            />
+                            {messageError && <div className="text-red-600 text-sm mb-2">{messageError}</div>}
+                            {messageSent ? (
+                                <div className="text-green-600 text-sm mb-2">Message sent!</div>
+                            ) : (
+                                <Button onClick={sendMessageToOwner} disabled={messageSending || !messageText.trim()}>
+                                    {messageSending ? "Sending..." : "Send Message"}
+                                </Button>
+                            )}
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

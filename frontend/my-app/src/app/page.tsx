@@ -7,13 +7,33 @@ import { Badge } from "@/components/ui/badge"
 import { Heart, Search, MessageCircle, Shield, Star, ArrowRight } from "lucide-react"
 import { Navigation } from "@/components/navigation"
 import { useAuth } from "@/lib/auth-context"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AuthModal } from "@/components/auth/auth-modal"
+import { listingsApi } from "@/lib/api"
 
 export default function LandingPage() {
   const { user } = useAuth()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin")
+  const [totalListings, setTotalListings] = useState(0)
+  const [loading, setLoading] = useState(true)
+
+  // Fetch total listings count from API
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const listings = await listingsApi.getListings()
+        setTotalListings(listings.length)
+      } catch (err) {
+        console.error('Error fetching listings count:', err)
+        setTotalListings(0)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStats()
+  }, [])
 
   const features = [
     {
@@ -40,31 +60,10 @@ export default function LandingPage() {
   ]
 
   const stats = [
-    { number: "2,500+", label: "Active Listings" },
-    { number: "15,000+", label: "Students Helped" },
-    { number: "50+", label: "Universities" },
-    { number: "4.8★", label: "Average Rating" },
-  ]
-
-  const testimonials = [
-    {
-      name: "Sarah Chen",
-      university: "UC Berkeley",
-      text: "Found my perfect studio apartment in just 2 days! The swipe feature made it so easy and fun.",
-      rating: 5,
-    },
-    {
-      name: "Mike Rodriguez",
-      university: "NYU",
-      text: "As someone subletting my place, I got 10+ interested students within hours of posting.",
-      rating: 5,
-    },
-    {
-      name: "Emma Thompson",
-      university: "UCLA",
-      text: "The messaging feature made it super easy to coordinate with potential roommates.",
-      rating: 5,
-    },
+    { number: loading ? "..." : `${totalListings}`, label: "Active Listings" },
+    { number: "0", label: "Students Helped" },
+    { number: "0", label: "Universities" },
+    { number: "0★", label: "Average Rating" },
   ]
 
   const handleProtectedAction = (action: string) => {
@@ -200,34 +199,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">What Students Say</h2>
-            <p className="text-xl text-gray-600">Join thousands of satisfied students who found their perfect home</p>
-          </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                  <p className="text-gray-600 mb-4">"{testimonial.text}"</p>
-                  <div>
-                    <div className="font-semibold">{testimonial.name}</div>
-                    <div className="text-sm text-gray-500">{testimonial.university}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-16">
