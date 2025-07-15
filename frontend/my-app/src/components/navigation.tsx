@@ -43,13 +43,16 @@ export function Navigation() {
 
                         {/* User Menu */}
                         <div className="hidden md:flex items-center space-x-2">
+                            <Link href="/swipe">
+                                <Button size="sm" variant="outline">Swipe</Button>
+                            </Link>
+                            <Link href="/messages">
+                                <Button size="sm" variant="outline">Messages</Button>
+                            </Link>
                             {user ? (
                                 <div className="flex items-center space-x-2">
                                     <Link href="/profile" className="text-sm text-blue-700 font-semibold hover:underline">
                                         {user.username}
-                                    </Link>
-                                    <Link href="/messages">
-                                        <Button size="sm" variant="outline">Messages</Button>
                                     </Link>
                                     <Link href="/add-listing">
                                         <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
@@ -82,6 +85,12 @@ export function Navigation() {
                     {/* Mobile Navigation */}
                     {isOpen && (
                         <div className="md:hidden py-4 border-t">
+                            <Link href="/swipe">
+                                <Button variant="ghost" className="w-full justify-start">Swipe</Button>
+                            </Link>
+                            <Link href="/messages">
+                                <Button variant="ghost" className="w-full justify-start">Messages</Button>
+                            </Link>
                             {user ? (
                                 <div className="space-y-2">
                                     <div className="px-3 py-2 text-sm text-gray-700">

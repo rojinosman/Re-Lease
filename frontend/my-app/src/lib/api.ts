@@ -176,6 +176,39 @@ export const listingsApi = {
       throw new Error('Failed to mark listing as interested');
     }
   },
+
+  // Get liked listings for the current user
+  async getLikedListings(): Promise<Listing[]> {
+    const response = await fetch(`${API_BASE_URL}/listings/liked`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch liked listings');
+    }
+    return response.json();
+  },
+
+  // Like a listing
+  async likeListing(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/listings/${id}/like`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to like listing');
+    }
+  },
+
+  // Unlike a listing
+  async unlikeListing(id: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/listings/${id}/unlike`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to unlike listing');
+    }
+  },
 };
 
 // Messages API
