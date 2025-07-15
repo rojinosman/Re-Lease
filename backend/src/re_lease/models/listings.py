@@ -1,7 +1,14 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Boolean
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Boolean, Table
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from ..database import Base
+
+liked_listings = Table(
+    'liked_listings',
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
+    Column('listing_id', Integer, ForeignKey('listings.id'), primary_key=True)
+)
 
 class Listing(Base):
     __tablename__ = 'listings'
@@ -28,6 +35,8 @@ class Listing(Base):
     
     # Relationship to messages
     messages = relationship("Message", back_populates="listing")
+
+    liked_by = relationship("User", secondary=liked_listings, back_populates="liked_listings")
 
 class Message(Base):
     __tablename__ = 'messages'

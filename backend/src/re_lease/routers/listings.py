@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
 from sqlalchemy.orm import Session
 from ..deps import db_dependency, user_dependency
 from ..models.users import User
@@ -241,6 +241,69 @@ async def mark_listing_as_interested(
     
     increment_listing_interested(db, listing_id)
     return {"message": "Listing marked as interested"}
+
+@router.post("/{listing_id}/like", status_code=status.HTTP_200_OK)
+async def like_listing(
+    listing_id: int = Path(...),
+    db: db_dependency = None,
+    current_user: user_dependency = None
+):
+    listing = get_listing_by_id(db, listing_id)
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    user = db.query(User).filter(User.id == current_user.id).first()
+    if listing in user.liked_listings:
+        return {"message": "Already liked"}
+    user.liked_listings.append(listing)
+    db.commit()
+    return {"message": "Listing liked"}
+
+@router.post("/{listing_id}/unlike", status_code=status.HTTP_200_OK)
+async def unlike_listing(
+    listing_id: int = Path(...),
+    db: db_dependency = None,
+    current_user: user_dependency = None
+):
+    listing = get_listing_by_id(db, listing_id)
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    user = db.query(User).filter(User.id == current_user.id).first()
+    if listing not in user.liked_listings:
+        return {"message": "Not liked"}
+    user.liked_listings.remove(listing)
+    db.commit()
+    return {"message": "Listing unliked"}
+
+@router.get("/liked", response_model=List[ListingResponse])
+async def get_liked_listings(
+    db: db_dependency,
+    current_user: user_dependency
+):
+    user = db.query(User).filter(User.id == current_user.id).first()
+    listings_response = []
+    for listing in user.liked_listings:
+        amenities = json.loads(listing.amenities) if listing.amenities else []
+        images = json.loads(listing.images) if listing.images else []
+        listings_response.append(ListingResponse(
+            id=listing.id,
+            title=listing.title,
+            description=listing.description,
+            price=listing.price,
+            location=listing.location,
+            bedrooms=listing.bedrooms,
+            bathrooms=listing.bathrooms,
+            available_from=listing.available_from,
+            amenities=amenities,
+            images=images,
+            status=listing.status,
+            views=listing.views,
+            interested=listing.interested,
+            created_at=listing.created_at,
+            updated_at=listing.updated_at,
+            user_id=listing.user_id,
+            user_username=listing.user.username
+        ))
+    return listings_response
 
 # Message endpoints
 @router.post("/messages", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
