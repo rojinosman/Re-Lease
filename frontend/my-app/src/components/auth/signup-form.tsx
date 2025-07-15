@@ -20,36 +20,35 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-  
   const { signup } = useAuth()
+  const [showVerification, setShowVerification] = useState(false)
+  const [verificationCode, setVerificationCode] = useState("")
+  const [verificationError, setVerificationError] = useState("")
+  const [verificationLoading, setVerificationLoading] = useState(false)
+  const [verificationSuccess, setVerificationSuccess] = useState(false)
 
   const validateForm = () => {
     if (!username.trim() || !email.trim() || !password || !confirmPassword) {
       setError("Please fill in all fields")
       return false
     }
-
     if (username.length < 3) {
       setError("Username must be at least 3 characters long")
       return false
     }
-
     if (password.length < 6) {
       setError("Password must be at least 6 characters long")
       return false
     }
-
     if (password !== confirmPassword) {
       setError("Passwords do not match")
       return false
     }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const emailRegex = /^[^\s@]+@gmail\.com$/
     if (!emailRegex.test(email)) {
-      setError("Please enter a valid email address")
+      setError("Only @gmail.com emails are allowed")
       return false
     }
-
     return true
   }
 
@@ -57,16 +56,14 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
     e.preventDefault()
     setError("")
     setIsLoading(true)
-
     if (!validateForm()) {
       setIsLoading(false)
       return
     }
-
     try {
       const success = await signup(username.trim(), email.trim(), password)
       if (success) {
-        onSuccess?.()
+        setShowVerification(true)
       } else {
         setError("Username or email already exists")
       }
@@ -75,6 +72,86 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setVerificationError("")
+    setVerificationLoading(true)
+    try {
+      const res = await fetch("/auth/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code: verificationCode })
+      })
+      if (res.ok) {
+        setVerificationSuccess(true)
+        setTimeout(() => {
+          onSuccess?.()
+        }, 1000)
+      } else {
+        const data = await res.json()
+        setVerificationError(data.detail || "Invalid verification code")
+      }
+    } catch {
+      setVerificationError("Failed to verify code. Please try again.")
+    } finally {
+      setVerificationLoading(false)
+    }
+  }
+
+  if (showVerification) {
+    return (
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">Verify Your Email</CardTitle>
+          <CardDescription className="text-center">
+            We sent a 6-digit verification code to your email. Please enter it below to verify your account.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleVerify} className="space-y-4">
+            {verificationError && (
+              <div className="flex items-center space-x-2 text-sm text-red-600 bg-red-50 p-3 rounded-md">
+                <AlertCircle className="w-4 h-4" />
+                <span>{verificationError}</span>
+              </div>
+            )}
+            {verificationSuccess && (
+              <div className="flex items-center space-x-2 text-sm text-green-600 bg-green-50 p-3 rounded-md">
+                <span>Verification successful! Redirecting...</span>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="verificationCode">Verification Code</Label>
+              <Input
+                id="verificationCode"
+                type="text"
+                placeholder="Enter the code"
+                value={verificationCode}
+                onChange={e => setVerificationCode(e.target.value)}
+                disabled={verificationLoading}
+                required
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={verificationLoading}
+            >
+              {verificationLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                "Verify"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (

@@ -46,8 +46,12 @@ export default function SearchPage() {
             try {
                 setIsLoading(true)
                 const data = await listingsApi.getListings()
-                setListings(data)
-                setFilteredListings(data)
+                // Only show listings not created by the current user and not already liked
+                const filtered = user
+                    ? data.filter(listing => listing.user_id !== user.id && !likedListings.some(l => l.id === listing.id))
+                    : data.filter(listing => !likedListings.some(l => l.id === listing.id))
+                setListings(filtered)
+                setFilteredListings(filtered)
                 setError(null)
             } catch {
                 setError('Failed to fetch listings')
@@ -57,7 +61,7 @@ export default function SearchPage() {
         }
 
         fetchListings()
-    }, [])
+    }, [user, likedListings])
 
     // Fetch liked listings on mount and whenever a like/unlike happens
     const fetchLikedListings = async () => {

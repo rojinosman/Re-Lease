@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/auth/protected-route"
 import { useRouter } from "next/navigation"
 import { listingsApi, type Listing } from "@/lib/api"
 import Image from "next/image"
+import { useAuth } from "@/lib/auth-context"
 
     const amenityIcons = {
     WiFi: Wifi,
@@ -20,6 +21,7 @@ import Image from "next/image"
     }
 
     export default function BrowsePage() {
+    const { user } = useAuth();
     const [currentIndex, setCurrentIndex] = useState(0)
     const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null)
     const [likedListings, setLikedListings] = useState<Listing[]>([])
@@ -37,7 +39,8 @@ import Image from "next/image"
             try {
                 setLoading(true)
                 const data = await listingsApi.getListings()
-                setListings(data)
+                // Only show listings that are not already liked and not created by the current user
+                setListings(data.filter(listing => !isLiked(listing.id) && (!user || listing.user_id !== user.id)))
                 setError(null)
             } catch (err) {
                 setError('Failed to fetch listings')
@@ -47,7 +50,7 @@ import Image from "next/image"
             }
         }
         fetchListings()
-    }, [])
+    }, [likedListings, user]) // re-run when likedListings or user changes
 
     // Fetch liked listings on mount and after like/unlike
     const fetchLikedListings = async () => {
@@ -133,6 +136,15 @@ import Image from "next/image"
         setCurrentIndex((prev) => (prev + 1) % listings.length)
         setSwipeDirection(null)
         }, 300)
+    }
+
+    const handleLikeAndSwipe = async (listing: Listing) => {
+        await handleLike(listing)
+        setCurrentIndex((prev) => {
+            // If last listing, go to next (which will be undefined and show 'no more listings')
+            if (prev + 1 >= listings.length) return prev + 1
+            return prev + 1
+        })
     }
 
     const BrowseContent = () => {
@@ -266,7 +278,8 @@ import Image from "next/image"
                         <Button
                             size="lg"
                             className="flex-1 bg-green-500 hover:bg-green-600"
-                            onClick={() => handleSwipe("right")}
+                            onClick={() => handleLikeAndSwipe(currentListing)}
+                            disabled={likeLoadingId === currentListing.id}
                         >
                             <Heart className="w-6 h-6" />
                         </Button>

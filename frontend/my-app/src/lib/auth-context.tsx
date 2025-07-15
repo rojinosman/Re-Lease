@@ -106,8 +106,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
       if (response.ok) {
-        // After successful signup, automatically log in
-        return await login(username, password)
+        // Do not auto-login, just return true to trigger verification step
+        return true
       } else {
         return false
       }
