@@ -1,6 +1,6 @@
 import json
 from typing import List, Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_, desc
 from ..models.listings import Listing, Message
 from ..models.users import User
@@ -137,7 +137,10 @@ def create_message(db: Session, message_data: MessageCreate, sender_id: int) -> 
 
 def get_conversation_messages(db: Session, user1_id: int, user2_id: int, listing_id: int) -> List[Message]:
     """Get messages between two users for a specific listing"""
-    return db.query(Message).filter(
+    return db.query(Message).options(
+        joinedload(Message.sender),
+        joinedload(Message.receiver)
+    ).filter(
         and_(
             Message.listing_id == listing_id,
             or_(

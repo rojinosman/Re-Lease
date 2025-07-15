@@ -2,6 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from ..deps import db_dependency, user_dependency
+from ..models.users import User
 from ..schemas.listings import (
     ListingCreate, 
     ListingUpdate, 
@@ -248,15 +249,16 @@ async def send_message(
     db: db_dependency,
     current_user: user_dependency
 ):
-    """Send a message to a listing owner"""
+    """Send a message to another user about a listing"""
     # Verify the listing exists
     listing = get_listing_by_id(db, message_data.listing_id)
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
     
-    # Verify the receiver exists and is the listing owner
-    if listing.user_id != message_data.receiver_id:
-        raise HTTPException(status_code=400, detail="Invalid receiver")
+    # Verify the receiver exists
+    receiver = db.query(User).filter(User.id == message_data.receiver_id).first()
+    if not receiver:
+        raise HTTPException(status_code=404, detail="Receiver not found")
     
     # Don't allow sending message to yourself
     if current_user.id == message_data.receiver_id:
@@ -273,7 +275,7 @@ async def send_message(
         is_read=db_message.is_read,
         created_at=db_message.created_at,
         sender_username=current_user.username,
-        receiver_username=listing.user.username
+        receiver_username=receiver.username
     )
 
 @router.get("/messages/conversations", response_model=List[ConversationResponse])
@@ -300,7 +302,7 @@ async def get_conversations(
     return conversations_response
 
 @router.get("/messages/{other_user_id}/{listing_id}", response_model=List[MessageResponse])
-async def get_conversation_messages(
+async def get_conversation_messages_endpoint(
     other_user_id: int,
     listing_id: int,
     db: db_dependency,
@@ -314,10 +316,6 @@ async def get_conversation_messages(
     
     messages_response = []
     for message in messages:
-        # Get sender and receiver usernames
-        sender_username = current_user.username if message.sender_id == current_user.id else "Unknown"
-        receiver_username = current_user.username if message.receiver_id == current_user.id else "Unknown"
-        
         messages_response.append(MessageResponse(
             id=message.id,
             text=message.text,
@@ -326,8 +324,8 @@ async def get_conversation_messages(
             listing_id=message.listing_id,
             is_read=message.is_read,
             created_at=message.created_at,
-            sender_username=sender_username,
-            receiver_username=receiver_username
+            sender_username=message.sender.username,
+            receiver_username=message.receiver.username
         ))
     
     return messages_response 
