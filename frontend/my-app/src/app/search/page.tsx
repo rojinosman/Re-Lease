@@ -301,7 +301,7 @@ export default function SearchPage() {
                                                     onChange={(e) => setSearchTerm(e.target.value)}
                                                 />
                                             </div>
-                                            <div>
+                    <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-1">Min Price</label>
                                                 <Input
                                                     type="number"
@@ -309,7 +309,7 @@ export default function SearchPage() {
                                                     value={minPrice}
                                                     onChange={(e) => setMinPrice(e.target.value)}
                                                 />
-                                            </div>
+                    </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-1">Max Price</label>
                                                 <Input
@@ -317,8 +317,8 @@ export default function SearchPage() {
                                                     placeholder="Max price"
                                                     value={maxPrice}
                                                     onChange={(e) => setMaxPrice(e.target.value)}
-                                                />
-                                            </div>
+                        />
+                    </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
                                                 <select
@@ -345,19 +345,19 @@ export default function SearchPage() {
                                                     <option value="3">3</option>
                                                     <option value="4">4+</option>
                                                 </select>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                    </div>
+                    </div>
+                </CardContent>
+            </Card>
 
                                 {/* Results */}
                                 <div className="mb-4">
-                                    <p className="text-gray-600">
+                <p className="text-gray-600">
                                         Found {filteredListings.length} listing{filteredListings.length !== 1 ? 's' : ''}
-                                    </p>
-                                </div>
+                </p>
+            </div>
 
-                                {filteredListings.length === 0 ? (
+            {filteredListings.length === 0 ? (
                                     <div className="text-center py-12">
                                         <p className="text-gray-600 mb-4">No listings found matching your criteria</p>
                                         <Button onClick={() => {
@@ -368,30 +368,30 @@ export default function SearchPage() {
                                             setBedrooms("")
                                         }}>
                                             Clear Filters
-                                        </Button>
+                    </Button>
                                     </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {filteredListings.map((listing) => (
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredListings.map((listing) => (
                                             <Card key={listing.id} className="hover:shadow-lg transition-shadow">
                                                 <CardHeader className="p-0">
                                                     {listing.images && listing.images.length > 0 ? (
                                                         <div className="relative h-48 bg-gray-200 rounded-t-lg overflow-hidden">
                                                             <Image
                                                                 src={listing.images[0]}
-                                                                alt={listing.title}
+                        alt={listing.title}
                                                                 width={400}
                                                                 height={200}
                                                                 className="w-full h-full object-cover"
-                                                            />
+                        />
                                                             <Badge className="absolute top-2 right-2 bg-blue-500">
                                                                 ${listing.price}/month
                                                             </Badge>
-                                                        </div>
+                    </div>
                                                     ) : (
                                                         <div className="h-48 bg-gray-200 rounded-t-lg flex items-center justify-center">
                                                             <span className="text-gray-500">No image available</span>
-                                                        </div>
+                        </div>
                                                     )}
                                                 </CardHeader>
                                                 <CardContent className="p-4">
@@ -401,7 +401,7 @@ export default function SearchPage() {
                                                         <span>{listing.bedrooms} bed</span>
                                                         <span>{listing.bathrooms} bath</span>
                                                         <span>{listing.views} views</span>
-                                                    </div>
+                        </div>
                                                     <p className="text-gray-700 mb-4 line-clamp-2">{listing.description}</p>
                                                     <div className="flex justify-between items-center">
                                                         <span className="text-lg font-semibold text-blue-600">
@@ -412,7 +412,7 @@ export default function SearchPage() {
                                                             onClick={() => handleContactOwner(listing)}
                                                         >
                                                             Contact Owner
-                                                        </Button>
+                        </Button>
                                                     </div>
                                                     <div className="flex justify-between items-center mt-4">
                                                         <span className="text-sm text-gray-500">
@@ -426,14 +426,14 @@ export default function SearchPage() {
                                                         >
                                                             <HeartIcon className={isLiked(listing.id) ? "fill-red-500 text-red-500" : ""} />
                                                             {isLiked(listing.id) ? "Unlike" : "Like"}
-                                                        </Button>
-                                                    </div>
+                        </Button>
+                        </div>
                                                     {likeError && <div className="text-red-600 text-xs mt-1">{likeError}</div>}
-                                                </CardContent>
-                                            </Card>
-                                        ))}
-                                    </div>
-                                )}
+                    </CardContent>
+                    </Card>
+                ))}
+                </div>
+            )}
                             </>
                         )}
                         <Dialog open={messageModalOpen} onOpenChange={setMessageModalOpen}>
@@ -463,9 +463,9 @@ export default function SearchPage() {
                                 )}
                             </DialogContent>
                         </Dialog>
-                    </div>
-                </div>
             </div>
+        </div>
+        </div>
         </ProtectedRoute>
     )
 }

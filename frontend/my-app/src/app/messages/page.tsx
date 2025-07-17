@@ -165,46 +165,46 @@ export default function MessagesPage() {
             )
         }
 
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-            <Navigation />
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <Navigation />
 
-            <div className="container mx-auto px-4 py-8">
-                <div className="max-w-6xl mx-auto">
-                <h1 className="text-3xl font-bold text-gray-800 mb-8">Messages</h1>
+        <div className="container mx-auto px-4 py-8">
+            <div className="max-w-6xl mx-auto">
+            <h1 className="text-3xl font-bold text-gray-800 mb-8">Messages</h1>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
-                    {/* Conversations List */}
-                    <Card className="lg:col-span-1">
-                    <CardHeader>
-                        <CardTitle className="text-lg">Conversations</CardTitle>
-                        <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <Input placeholder="Search messages..." className="pl-10" />
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <div className="space-y-1">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+                {/* Conversations List */}
+                <Card className="lg:col-span-1">
+                <CardHeader>
+                    <CardTitle className="text-lg">Conversations</CardTitle>
+                    <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input placeholder="Search messages..." className="pl-10" />
+                    </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <div className="space-y-1">
                         {conversations.map((conversation) => (
-                            <div
-                            key={conversation.id}
-                            className={`p-4 cursor-pointer hover:bg-gray-50 border-b ${
-                                selectedConversation === conversation.id ? "bg-blue-50 border-l-4 border-l-blue-500" : ""
-                            }`}
-                            onClick={() => setSelectedConversation(conversation.id)}
-                            >
-                            <div className="flex items-center gap-3">
-                                <Avatar>
+                        <div
+                        key={conversation.id}
+                        className={`p-4 cursor-pointer hover:bg-gray-50 border-b ${
+                            selectedConversation === conversation.id ? "bg-blue-50 border-l-4 border-l-blue-500" : ""
+                        }`}
+                        onClick={() => setSelectedConversation(conversation.id)}
+                        >
+                        <div className="flex items-center gap-3">
+                            <Avatar>
                                 <AvatarImage src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial, sans-serif' font-size='12' fill='%239ca3af'%3EUser%3C/text%3E%3C/svg%3E" />
-                                <AvatarFallback>
+                            <AvatarFallback>
                                     {conversation.other_user_name
-                                    .split(" ")
-                                    .map((n) => n[0])
-                                    .join("")}
-                                </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-center">
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-center">
                                     <h3 className="font-medium truncate">{conversation.other_user_name}</h3>
                                     <span className="text-xs text-gray-500">{new Date(conversation.last_message_time).toLocaleString()}</span>
                                 </div>
@@ -217,75 +217,75 @@ export default function MessagesPage() {
                             </div>
                             </div>
                         ))}
-                        </div>
-                    </CardContent>
-                    </Card>
+                    </div>
+                </CardContent>
+                </Card>
 
-                    {/* Chat Area */}
-                    <Card className="lg:col-span-2 flex flex-col">
-                    {selectedConv ? (
-                        <>
-                        <CardHeader className="border-b">
-                            <div className="flex items-center gap-3">
-                            <Avatar>
+                {/* Chat Area */}
+                <Card className="lg:col-span-2 flex flex-col">
+                {selectedConv ? (
+                    <>
+                    <CardHeader className="border-b">
+                        <div className="flex items-center gap-3">
+                        <Avatar>
                                 <AvatarImage src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial, sans-serif' font-size='12' fill='%239ca3af'%3EUser%3C/text%3E%3C/svg%3E" />
-                                <AvatarFallback>
+                            <AvatarFallback>
                                 {selectedConv.other_user_name
-                                    .split(" ")
-                                    .map((n) => n[0])
-                                    .join("")}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div>
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div>
                                 <h3 className="font-medium">{selectedConv.other_user_name}</h3>
                                 <p className="text-sm text-gray-600">{selectedConv.listing_title}</p>
-                            </div>
-                            </div>
-                        </CardHeader>
+                        </div>
+                        </div>
+                    </CardHeader>
 
-                        <CardContent className="flex-1 p-4 overflow-y-auto">
-                            <div className="space-y-4">
-                            {messages.map((message) => (
-                                <div
-                                key={message.id}
+                    <CardContent className="flex-1 p-4 overflow-y-auto">
+                        <div className="space-y-4">
+                        {messages.map((message) => (
+                            <div
+                            key={message.id}
                                 className={`flex ${user && message.sender_username === user.username ? "justify-end" : "justify-start"}`}
-                                >
-                                <div
-                                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                            >
+                            <div
+                                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                                     user && message.sender_username === user.username ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
-                                    }`}
-                                >
-                                    <p className="text-sm">{message.text}</p>
-                                    <p
+                                }`}
+                            >
+                                <p className="text-sm">{message.text}</p>
+                                <p
                                     className={`text-xs mt-1 ${user && message.sender_username === user.username ? "text-blue-100" : "text-gray-500"}`}
-                                    >
+                                >
                                     {new Date(message.created_at).toLocaleString()}
-                                    </p>
-                                </div>
-                                </div>
-                            ))}
+                                </p>
                             </div>
-                        </CardContent>
+                            </div>
+                        ))}
+                        </div>
+                    </CardContent>
 
-                        <div className="p-4 border-t">
+                    <div className="p-4 border-t">
                             <MessageInput 
                                 onSendMessage={handleSendMessage}
                                 disabled={!selectedConversation}
                             />
-                        </div>
-                        </>
-                    ) : (
+                    </div>
+                    </>
+                ) : (
                         <div className="flex-1 flex items-center justify-center">
                         <div className="text-center text-gray-500">
                             <p>Select a conversation to start messaging</p>
                         </div>
-                        </div>
-                    )}
-                    </Card>
-                </div>
-                </div>
+                    </div>
+                )}
+                </Card>
             </div>
             </div>
+        </div>
+        </div>
         )
     }
 
