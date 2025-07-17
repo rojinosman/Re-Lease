@@ -11,7 +11,7 @@ class User(Base):
     password_hash = Column(String(128), nullable=False)
     bio = Column(String(255), nullable=True)
     verified = Column(Boolean, default=False)
-    
+    verification_code = Column(String(10), nullable=True)  # New field for email verification code
     # Relationships
     listings = relationship("Listing", back_populates="user")
     sent_messages = relationship("Message", foreign_keys="Message.sender_id", back_populates="sender")
