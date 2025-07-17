@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from ..database import Base
 
@@ -12,6 +12,7 @@ class User(Base):
     bio = Column(String(255), nullable=True)
     verified = Column(Boolean, default=False)
     verification_code = Column(String(10), nullable=True)  # New field for email verification code
+    verification_code_expires_at = Column(DateTime, nullable=True)  # Expiration for verification code
     # Relationships
     listings = relationship("Listing", back_populates="user")
     sent_messages = relationship("Message", foreign_keys="Message.sender_id", back_populates="sender")

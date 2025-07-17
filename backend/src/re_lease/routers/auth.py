@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
@@ -41,13 +41,15 @@ async def create_user(db: db_dependency, create_user_request: UserCreateRequest)
     if not create_user_request.email.endswith("@gmail.com"):
         raise HTTPException(status_code=400, detail="Only @gmail.com emails are allowed")
     code = str(random.randint(100000, 999999))
-    verification_codes[create_user_request.email] = code
+    expires_at = datetime.utcnow() + timedelta(minutes=10)
     send_verification_email(create_user_request.email, code)
     create_user_model = User(
         username=create_user_request.username,
         email=create_user_request.email,
         password_hash=bcrypt_context.hash(create_user_request.password),
-        verified=False
+        verified=False,
+        verification_code=code,
+        verification_code_expires_at=expires_at
     )
     db.add(create_user_model)
     db.commit()
@@ -60,13 +62,18 @@ async def verify_email(request: Request, db: db_dependency):
     code = data.get("code")
     if not email or not code:
         raise HTTPException(status_code=400, detail="Email and code are required")
-    expected_code = verification_codes.get(email)
-    if expected_code != code:
-        raise HTTPException(status_code=400, detail="Invalid verification code")
     user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    if not user.verification_code or not user.verification_code_expires_at:
+        raise HTTPException(status_code=400, detail="No verification code found. Please request a new one.")
+    if datetime.utcnow() > user.verification_code_expires_at:
+        raise HTTPException(status_code=400, detail="Verification code expired. Please request a new one.")
+    if str(user.verification_code).strip() != str(code).strip():
+        raise HTTPException(status_code=400, detail="Invalid verification code")
     user.verified = True
+    user.verification_code = None  # Clear the code after successful verification
+    user.verification_code_expires_at = None
     db.commit()
     return {"message": "Email verified successfully."}
 
