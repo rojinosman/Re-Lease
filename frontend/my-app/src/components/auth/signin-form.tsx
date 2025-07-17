@@ -70,7 +70,7 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
     setVerificationError("")
     setVerificationLoading(true)
     try {
-      const res = await fetch("/auth/verify", {
+      const res = await fetch("http://localhost:8000/auth/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: emailForVerification || username, code: verificationCode })
@@ -83,7 +83,7 @@ export function SignInForm({ onSuccess, onSwitchToSignUp }: SignInFormProps) {
           // Retry login automatically
           setIsLoading(true)
           setError("")
-          const retry = await fetch("/auth/token", {
+          const retry = await fetch("http://localhost:8000/auth/token", {
             method: "POST",
             body: new URLSearchParams({ username: username.trim(), password }),
             headers: { "Content-Type": "application/x-www-form-urlencoded" }

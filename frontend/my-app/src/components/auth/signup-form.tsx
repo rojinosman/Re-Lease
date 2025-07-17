@@ -79,7 +79,7 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
     setVerificationError("")
     setVerificationLoading(true)
     try {
-      const res = await fetch("/auth/verify", {
+      const res = await fetch("http://localhost:8000/auth/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code: verificationCode })
